@@ -154,6 +154,7 @@ pub use crate::rules::eslint::no_var::NoVar as EslintNoVar;
 pub use crate::rules::eslint::no_void::NoVoid as EslintNoVoid;
 pub use crate::rules::eslint::no_warning_comments::NoWarningComments as EslintNoWarningComments;
 pub use crate::rules::eslint::no_with::NoWith as EslintNoWith;
+pub use crate::rules::eslint::object_shorthand::ObjectShorthand as EslintObjectShorthand;
 pub use crate::rules::eslint::operator_assignment::OperatorAssignment as EslintOperatorAssignment;
 pub use crate::rules::eslint::prefer_const::PreferConst as EslintPreferConst;
 pub use crate::rules::eslint::prefer_destructuring::PreferDestructuring as EslintPreferDestructuring;
@@ -900,6 +901,7 @@ pub enum RuleEnum {
     EslintNoVoid(EslintNoVoid),
     EslintNoWarningComments(EslintNoWarningComments),
     EslintNoWith(EslintNoWith),
+    EslintObjectShorthand(EslintObjectShorthand),
     EslintOperatorAssignment(EslintOperatorAssignment),
     EslintPreferConst(EslintPreferConst),
     EslintPreferDestructuring(EslintPreferDestructuring),
@@ -1610,7 +1612,8 @@ const ESLINT_NO_VAR_ID: usize = ESLINT_NO_USELESS_RETURN_ID + 1usize;
 const ESLINT_NO_VOID_ID: usize = ESLINT_NO_VAR_ID + 1usize;
 const ESLINT_NO_WARNING_COMMENTS_ID: usize = ESLINT_NO_VOID_ID + 1usize;
 const ESLINT_NO_WITH_ID: usize = ESLINT_NO_WARNING_COMMENTS_ID + 1usize;
-const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_NO_WITH_ID + 1usize;
+const ESLINT_OBJECT_SHORTHAND_ID: usize = ESLINT_NO_WITH_ID + 1usize;
+const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_OBJECT_SHORTHAND_ID + 1usize;
 const ESLINT_PREFER_CONST_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1usize;
 const ESLINT_PREFER_DESTRUCTURING_ID: usize = ESLINT_PREFER_CONST_ID + 1usize;
 const ESLINT_PREFER_EXPONENTIATION_OPERATOR_ID: usize = ESLINT_PREFER_DESTRUCTURING_ID + 1usize;
@@ -2404,6 +2407,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => ESLINT_NO_VOID_ID,
             Self::EslintNoWarningComments(_) => ESLINT_NO_WARNING_COMMENTS_ID,
             Self::EslintNoWith(_) => ESLINT_NO_WITH_ID,
+            Self::EslintObjectShorthand(_) => ESLINT_OBJECT_SHORTHAND_ID,
             Self::EslintOperatorAssignment(_) => ESLINT_OPERATOR_ASSIGNMENT_ID,
             Self::EslintPreferConst(_) => ESLINT_PREFER_CONST_ID,
             Self::EslintPreferDestructuring(_) => ESLINT_PREFER_DESTRUCTURING_ID,
@@ -3219,6 +3223,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => EslintNoVoid::NAME,
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::NAME,
             Self::EslintNoWith(_) => EslintNoWith::NAME,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::NAME,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::NAME,
             Self::EslintPreferConst(_) => EslintPreferConst::NAME,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::NAME,
@@ -4028,6 +4033,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => EslintNoVoid::CATEGORY,
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::CATEGORY,
             Self::EslintNoWith(_) => EslintNoWith::CATEGORY,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::CATEGORY,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::CATEGORY,
             Self::EslintPreferConst(_) => EslintPreferConst::CATEGORY,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::CATEGORY,
@@ -4880,6 +4886,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => EslintNoVoid::FIX,
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::FIX,
             Self::EslintNoWith(_) => EslintNoWith::FIX,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::FIX,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::FIX,
             Self::EslintPreferConst(_) => EslintPreferConst::FIX,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::FIX,
@@ -5712,6 +5719,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => EslintNoVoid::documentation(),
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::documentation(),
             Self::EslintNoWith(_) => EslintNoWith::documentation(),
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::documentation(),
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::documentation(),
             Self::EslintPreferConst(_) => EslintPreferConst::documentation(),
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::documentation(),
@@ -6969,6 +6977,8 @@ impl RuleEnum {
             Self::EslintNoWith(_) => {
                 EslintNoWith::config_schema(generator).or_else(|| EslintNoWith::schema(generator))
             }
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::config_schema(generator)
+                .or_else(|| EslintObjectShorthand::schema(generator)),
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::config_schema(generator)
                 .or_else(|| EslintOperatorAssignment::schema(generator)),
             Self::EslintPreferConst(_) => EslintPreferConst::config_schema(generator)
@@ -8706,6 +8716,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => "eslint",
             Self::EslintNoWarningComments(_) => "eslint",
             Self::EslintNoWith(_) => "eslint",
+            Self::EslintObjectShorthand(_) => "eslint",
             Self::EslintOperatorAssignment(_) => "eslint",
             Self::EslintPreferConst(_) => "eslint",
             Self::EslintPreferDestructuring(_) => "eslint",
@@ -9769,6 +9780,9 @@ impl RuleEnum {
             )),
             Self::EslintNoWith(_) => {
                 Ok(Self::EslintNoWith(EslintNoWith::from_configuration(value)?))
+            }
+            Self::EslintObjectShorthand(_) => {
+                Ok(Self::EslintObjectShorthand(EslintObjectShorthand::from_configuration(value)?))
             }
             Self::EslintOperatorAssignment(_) => Ok(Self::EslintOperatorAssignment(
                 EslintOperatorAssignment::from_configuration(value)?,
@@ -11685,6 +11699,7 @@ impl RuleEnum {
             Self::EslintNoVoid(rule) => rule.to_configuration(),
             Self::EslintNoWarningComments(rule) => rule.to_configuration(),
             Self::EslintNoWith(rule) => rule.to_configuration(),
+            Self::EslintObjectShorthand(rule) => rule.to_configuration(),
             Self::EslintOperatorAssignment(rule) => rule.to_configuration(),
             Self::EslintPreferConst(rule) => rule.to_configuration(),
             Self::EslintPreferDestructuring(rule) => rule.to_configuration(),
@@ -12398,6 +12413,7 @@ impl RuleEnum {
             Self::EslintNoVoid(rule) => rule.run(node, ctx),
             Self::EslintNoWarningComments(rule) => rule.run(node, ctx),
             Self::EslintNoWith(rule) => rule.run(node, ctx),
+            Self::EslintObjectShorthand(rule) => rule.run(node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run(node, ctx),
             Self::EslintPreferConst(rule) => rule.run(node, ctx),
             Self::EslintPreferDestructuring(rule) => rule.run(node, ctx),
@@ -13107,6 +13123,7 @@ impl RuleEnum {
             Self::EslintNoVoid(rule) => rule.run_once(ctx),
             Self::EslintNoWarningComments(rule) => rule.run_once(ctx),
             Self::EslintNoWith(rule) => rule.run_once(ctx),
+            Self::EslintObjectShorthand(rule) => rule.run_once(ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_once(ctx),
             Self::EslintPreferConst(rule) => rule.run_once(ctx),
             Self::EslintPreferDestructuring(rule) => rule.run_once(ctx),
@@ -13820,6 +13837,7 @@ impl RuleEnum {
             Self::EslintNoVoid(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoWarningComments(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoWith(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintObjectShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferConst(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferDestructuring(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14625,6 +14643,7 @@ impl RuleEnum {
             Self::EslintNoVoid(rule) => rule.should_run(ctx),
             Self::EslintNoWarningComments(rule) => rule.should_run(ctx),
             Self::EslintNoWith(rule) => rule.should_run(ctx),
+            Self::EslintObjectShorthand(rule) => rule.should_run(ctx),
             Self::EslintOperatorAssignment(rule) => rule.should_run(ctx),
             Self::EslintPreferConst(rule) => rule.should_run(ctx),
             Self::EslintPreferDestructuring(rule) => rule.should_run(ctx),
@@ -15360,6 +15379,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => EslintNoVoid::IS_TSGOLINT_RULE,
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::IS_TSGOLINT_RULE,
             Self::EslintNoWith(_) => EslintNoWith::IS_TSGOLINT_RULE,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::IS_TSGOLINT_RULE,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::IS_TSGOLINT_RULE,
             Self::EslintPreferConst(_) => EslintPreferConst::IS_TSGOLINT_RULE,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::IS_TSGOLINT_RULE,
@@ -16354,6 +16374,7 @@ impl RuleEnum {
             Self::EslintNoVoid(_) => EslintNoVoid::HAS_CONFIG,
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::HAS_CONFIG,
             Self::EslintNoWith(_) => EslintNoWith::HAS_CONFIG,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::HAS_CONFIG,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::HAS_CONFIG,
             Self::EslintPreferConst(_) => EslintPreferConst::HAS_CONFIG,
             Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::HAS_CONFIG,
@@ -17227,6 +17248,7 @@ impl RuleEnum {
             Self::EslintNoVoid(rule) => rule.types_info(),
             Self::EslintNoWarningComments(rule) => rule.types_info(),
             Self::EslintNoWith(rule) => rule.types_info(),
+            Self::EslintObjectShorthand(rule) => rule.types_info(),
             Self::EslintOperatorAssignment(rule) => rule.types_info(),
             Self::EslintPreferConst(rule) => rule.types_info(),
             Self::EslintPreferDestructuring(rule) => rule.types_info(),
@@ -17936,6 +17958,7 @@ impl RuleEnum {
             Self::EslintNoVoid(rule) => rule.run_info(),
             Self::EslintNoWarningComments(rule) => rule.run_info(),
             Self::EslintNoWith(rule) => rule.run_info(),
+            Self::EslintObjectShorthand(rule) => rule.run_info(),
             Self::EslintOperatorAssignment(rule) => rule.run_info(),
             Self::EslintPreferConst(rule) => rule.run_info(),
             Self::EslintPreferDestructuring(rule) => rule.run_info(),
@@ -18667,6 +18690,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoVoid(EslintNoVoid::default()),
         RuleEnum::EslintNoWarningComments(EslintNoWarningComments::default()),
         RuleEnum::EslintNoWith(EslintNoWith::default()),
+        RuleEnum::EslintObjectShorthand(EslintObjectShorthand::default()),
         RuleEnum::EslintOperatorAssignment(EslintOperatorAssignment::default()),
         RuleEnum::EslintPreferConst(EslintPreferConst::default()),
         RuleEnum::EslintPreferDestructuring(EslintPreferDestructuring::default()),
