@@ -8,54 +8,53 @@
  * - They can also be imported directly via `index.ts` (Node.js API)
  *   - In this case, module-level caches are shared globally
  *
- * The caches (`xxxCache`) are for lazy loading
+ * The `CACHES.xxx` are for lazy loading
  * and avoiding redundant dynamic imports within the same process.
  */
 
 import type { Options, Plugin } from "prettier";
 
-// Lazy load Prettier
-//
-// NOTE: In the past, statically importing caused issues with `oxfmt --lsp` not starting.
-// However, this issue has not been observed recently, possibly due to changes in the bundling configuration.
-// Anyway, we keep lazy loading for now to minimize initial load time.
-let prettierCache: typeof import("prettier");
+const CACHES = {
+  prettier: null as typeof import("prettier") | null,
+  tailwindPlugin: null as typeof import("prettier-plugin-tailwindcss") | null,
+  tailwindSorter: null as typeof import("prettier-plugin-tailwindcss/sorter") | null,
+  oxfmtPlugin: null as Plugin | null,
+};
 
 async function loadPrettier(): Promise<typeof import("prettier")> {
-  if (prettierCache) return prettierCache;
+  if (!CACHES.prettier) {
+    CACHES.prettier = await import("prettier");
 
-  prettierCache = await import("prettier");
-
-  // NOTE: This is needed for xxx-in-js formatting to work correctly.
-  //
-  // Prettier internally extends `options` with hidden fields for embedded-formatters during printing.
-  // However, `__debug.printToDoc()` runs `normalizeFormatOptions()` which strips unknown keys.
-  // Only keys registered in `formatOptionsHiddenDefaults` survive (via `passThrough` option).
-  // Since `__debug.printToDoc()` does NOT use `passThrough: true` (unlike internal `textToDoc()`!),
-  // our custom fields would be dropped without this registration.
-  //
-  // The default values MUST be falsy, truthy default would affect all Prettier calls, not just ours.
-  // In call sites, Prettier checks `if (!options.parentParser)`, so as long as the default is falsy,
-  // there should be no side effects on other calls that don't set these fields.
-  // @ts-expect-error: Use internal API
-  const { formatOptionsHiddenDefaults } = prettierCache.__internal;
-  // For html(angular)-in-js: Prevent attribute level formatting from running.
-  // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
-  // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
-  // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
-  // but Prettier's `!options.parentParser` check is all-or-nothing.
-  formatOptionsHiddenDefaults.parentParser = null;
-  // For html(angular)-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
-  // This is used to decide whether to wrap content with `indent`.
-  // Without this, we'd need either:
-  // - double parse AST
-  // - or flaky traversal of the `Doc` output
-  // to extract the same information, since this hooks into the AST.
-  formatOptionsHiddenDefaults.__onHtmlRoot = null;
-  // For md-in-js: Use `~` instead of `` ` `` for code fences
-  formatOptionsHiddenDefaults.__inJsTemplate = null;
-
-  return prettierCache;
+    // NOTE: This is needed for xxx-in-js formatting to work correctly.
+    //
+    // Prettier internally extends `options` with hidden fields for embedded-formatters during printing.
+    // However, `__debug.printToDoc()` runs `normalizeFormatOptions()` which strips unknown keys.
+    // Only keys registered in `formatOptionsHiddenDefaults` survive (via `passThrough` option).
+    // Since `__debug.printToDoc()` does NOT use `passThrough: true` (unlike internal `textToDoc()`!),
+    // our custom fields would be dropped without this registration.
+    //
+    // The default values MUST be falsy, truthy default would affect all Prettier calls, not just ours.
+    // In call sites, Prettier checks `if (!options.parentParser)`, so as long as the default is falsy,
+    // there should be no side effects on other calls that don't set these fields.
+    // @ts-expect-error: Use internal API
+    const { formatOptionsHiddenDefaults } = CACHES.prettier.__internal;
+    // For html(angular)-in-js: Prevent attribute level formatting from running.
+    // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
+    // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
+    // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
+    // but Prettier's `!options.parentParser` check is all-or-nothing.
+    formatOptionsHiddenDefaults.parentParser = null;
+    // For html(angular)-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
+    // This is used to decide whether to wrap content with `indent`.
+    // Without this, we'd need either:
+    // - double parse AST
+    // - or flaky traversal of the `Doc` output
+    // to extract the same information, since this hooks into the AST.
+    formatOptionsHiddenDefaults.__onHtmlRoot = null;
+    // For md-in-js: Use `~` instead of `` ` `` for code fences
+    formatOptionsHiddenDefaults.__inJsTemplate = null;
+  }
+  return CACHES.prettier;
 }
 
 // ---
@@ -85,7 +84,7 @@ export type FormatFileParam = {
  * @returns Formatted code
  */
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
-  const prettier = prettierCache ?? (await loadPrettier());
+  const prettier = CACHES.prettier ?? (await loadPrettier());
 
   // Enable Tailwind CSS plugin for non-JS files if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
@@ -114,7 +113,7 @@ export async function formatEmbeddedCode({
   code,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
-  const prettier = prettierCache ?? (await loadPrettier());
+  const prettier = CACHES.prettier ?? (await loadPrettier());
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
@@ -148,7 +147,7 @@ export async function formatEmbeddedDoc({
   texts,
   options,
 }: FormatEmbeddedDocParam): Promise<string[]> {
-  const prettier = prettierCache ?? (await loadPrettier());
+  const prettier = CACHES.prettier ?? (await loadPrettier());
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
@@ -200,13 +199,11 @@ export async function formatEmbeddedDoc({
 // Tailwind CSS support
 // ---
 
-let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
-
 async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tailwindcss")> {
-  if (tailwindPluginCache) return tailwindPluginCache;
-
-  tailwindPluginCache = await import("prettier-plugin-tailwindcss");
-  return tailwindPluginCache;
+  if (!CACHES.tailwindPlugin) {
+    CACHES.tailwindPlugin = await import("prettier-plugin-tailwindcss");
+  }
+  return CACHES.tailwindPlugin;
 }
 
 // ---
@@ -216,8 +213,7 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
  * Option mapping (sortTailwindcss.xxx → tailwindXxx) is also done in Rust side.
  */
 async function setupTailwindPlugin(options: Options): Promise<void> {
-  const tailwindPlugin = tailwindPluginCache ?? (await loadTailwindPlugin());
-
+  const tailwindPlugin = CACHES.tailwindPlugin ?? (await loadTailwindPlugin());
   options.plugins ??= [];
   options.plugins.push(tailwindPlugin as Plugin);
 }
@@ -235,13 +231,11 @@ export interface SortTailwindClassesArgs {
   };
 }
 
-let tailwindSorterCache: typeof import("prettier-plugin-tailwindcss/sorter");
-
 async function loadTailwindSorter() {
-  if (tailwindSorterCache) return tailwindSorterCache;
-
-  tailwindSorterCache = await import("prettier-plugin-tailwindcss/sorter");
-  return tailwindSorterCache;
+  if (!CACHES.tailwindSorter) {
+    CACHES.tailwindSorter = await import("prettier-plugin-tailwindcss/sorter");
+  }
+  return CACHES.tailwindSorter;
 }
 
 /**
@@ -253,7 +247,7 @@ export async function sortTailwindClasses({
   classes,
   options,
 }: SortTailwindClassesArgs): Promise<string[]> {
-  const { createSorter } = tailwindSorterCache ?? (await loadTailwindSorter());
+  const { createSorter } = CACHES.tailwindSorter ?? (await loadTailwindSorter());
 
   const sorter = await createSorter({
     filepath: options.filepath,
@@ -270,13 +264,11 @@ export async function sortTailwindClasses({
 // Oxfmt plugin support for (j|t)-in-xxx files
 // ---
 
-let oxfmtPluginCache: Plugin;
-
 async function loadOxfmtPlugin(): Promise<Plugin> {
-  if (oxfmtPluginCache) return oxfmtPluginCache;
-
-  oxfmtPluginCache = (await import("./prettier-plugin-oxfmt/index")) as Plugin;
-  return oxfmtPluginCache;
+  if (!CACHES.oxfmtPlugin) {
+    CACHES.oxfmtPlugin = (await import("./prettier-plugin-oxfmt/index")) as Plugin;
+  }
+  return CACHES.oxfmtPlugin;
 }
 
 // ---
@@ -285,8 +277,7 @@ async function loadOxfmtPlugin(): Promise<Plugin> {
  * Load oxfmt plugin for js-in-xxx parsers.
  */
 async function setupOxfmtPlugin(options: Options): Promise<void> {
-  const oxcPlugin = oxfmtPluginCache ?? (await loadOxfmtPlugin());
-
+  const oxcPlugin = CACHES.oxfmtPlugin ?? (await loadOxfmtPlugin());
   options.plugins ??= [];
   options.plugins.push(oxcPlugin);
 }
