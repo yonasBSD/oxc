@@ -676,6 +676,7 @@ pub use crate::rules::unicorn::require_module_specifiers::RequireModuleSpecifier
 pub use crate::rules::unicorn::require_number_to_fixed_digits_argument::RequireNumberToFixedDigitsArgument as UnicornRequireNumberToFixedDigitsArgument;
 pub use crate::rules::unicorn::require_post_message_target_origin::RequirePostMessageTargetOrigin as UnicornRequirePostMessageTargetOrigin;
 pub use crate::rules::unicorn::switch_case_braces::SwitchCaseBraces as UnicornSwitchCaseBraces;
+pub use crate::rules::unicorn::switch_case_break_position::SwitchCaseBreakPosition as UnicornSwitchCaseBreakPosition;
 pub use crate::rules::unicorn::text_encoding_identifier_case::TextEncodingIdentifierCase as UnicornTextEncodingIdentifierCase;
 pub use crate::rules::unicorn::throw_new_error::ThrowNewError as UnicornThrowNewError;
 pub use crate::rules::vitest::consistent_each_for::ConsistentEachFor as VitestConsistentEachFor;
@@ -1278,6 +1279,7 @@ pub enum RuleEnum {
     UnicornRequireNumberToFixedDigitsArgument(UnicornRequireNumberToFixedDigitsArgument),
     UnicornRequirePostMessageTargetOrigin(UnicornRequirePostMessageTargetOrigin),
     UnicornSwitchCaseBraces(UnicornSwitchCaseBraces),
+    UnicornSwitchCaseBreakPosition(UnicornSwitchCaseBreakPosition),
     UnicornTextEncodingIdentifierCase(UnicornTextEncodingIdentifierCase),
     UnicornThrowNewError(UnicornThrowNewError),
     JsxA11YAltText(JsxA11YAltText),
@@ -2062,7 +2064,9 @@ const UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID: usize =
 const UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID: usize =
     UNICORN_REQUIRE_NUMBER_TO_FIXED_DIGITS_ARGUMENT_ID + 1usize;
 const UNICORN_SWITCH_CASE_BRACES_ID: usize = UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID + 1usize;
-const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize = UNICORN_SWITCH_CASE_BRACES_ID + 1usize;
+const UNICORN_SWITCH_CASE_BREAK_POSITION_ID: usize = UNICORN_SWITCH_CASE_BRACES_ID + 1usize;
+const UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID: usize =
+    UNICORN_SWITCH_CASE_BREAK_POSITION_ID + 1usize;
 const UNICORN_THROW_NEW_ERROR_ID: usize = UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID + 1usize;
 const JSX_A_11_Y_ALT_TEXT_ID: usize = UNICORN_THROW_NEW_ERROR_ID + 1usize;
 const JSX_A_11_Y_ANCHOR_AMBIGUOUS_TEXT_ID: usize = JSX_A_11_Y_ALT_TEXT_ID + 1usize;
@@ -2886,6 +2890,7 @@ impl RuleEnum {
                 UNICORN_REQUIRE_POST_MESSAGE_TARGET_ORIGIN_ID
             }
             Self::UnicornSwitchCaseBraces(_) => UNICORN_SWITCH_CASE_BRACES_ID,
+            Self::UnicornSwitchCaseBreakPosition(_) => UNICORN_SWITCH_CASE_BREAK_POSITION_ID,
             Self::UnicornTextEncodingIdentifierCase(_) => UNICORN_TEXT_ENCODING_IDENTIFIER_CASE_ID,
             Self::UnicornThrowNewError(_) => UNICORN_THROW_NEW_ERROR_ID,
             Self::JsxA11YAltText(_) => JSX_A_11_Y_ALT_TEXT_ID,
@@ -3697,6 +3702,7 @@ impl RuleEnum {
                 UnicornRequirePostMessageTargetOrigin::NAME
             }
             Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::NAME,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::NAME,
             Self::UnicornTextEncodingIdentifierCase(_) => UnicornTextEncodingIdentifierCase::NAME,
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::NAME,
             Self::JsxA11YAltText(_) => JsxA11YAltText::NAME,
@@ -4544,6 +4550,7 @@ impl RuleEnum {
                 UnicornRequirePostMessageTargetOrigin::CATEGORY
             }
             Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::CATEGORY,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::CATEGORY,
             Self::UnicornTextEncodingIdentifierCase(_) => {
                 UnicornTextEncodingIdentifierCase::CATEGORY
             }
@@ -5366,6 +5373,7 @@ impl RuleEnum {
                 UnicornRequirePostMessageTargetOrigin::FIX
             }
             Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::FIX,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::FIX,
             Self::UnicornTextEncodingIdentifierCase(_) => UnicornTextEncodingIdentifierCase::FIX,
             Self::UnicornThrowNewError(_) => UnicornThrowNewError::FIX,
             Self::JsxA11YAltText(_) => JsxA11YAltText::FIX,
@@ -6340,6 +6348,9 @@ impl RuleEnum {
                 UnicornRequirePostMessageTargetOrigin::documentation()
             }
             Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::documentation(),
+            Self::UnicornSwitchCaseBreakPosition(_) => {
+                UnicornSwitchCaseBreakPosition::documentation()
+            }
             Self::UnicornTextEncodingIdentifierCase(_) => {
                 UnicornTextEncodingIdentifierCase::documentation()
             }
@@ -8137,6 +8148,10 @@ impl RuleEnum {
             }
             Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::config_schema(generator)
                 .or_else(|| UnicornSwitchCaseBraces::schema(generator)),
+            Self::UnicornSwitchCaseBreakPosition(_) => {
+                UnicornSwitchCaseBreakPosition::config_schema(generator)
+                    .or_else(|| UnicornSwitchCaseBreakPosition::schema(generator))
+            }
             Self::UnicornTextEncodingIdentifierCase(_) => {
                 UnicornTextEncodingIdentifierCase::config_schema(generator)
                     .or_else(|| UnicornTextEncodingIdentifierCase::schema(generator))
@@ -9122,6 +9137,7 @@ impl RuleEnum {
             Self::UnicornRequireNumberToFixedDigitsArgument(_) => "unicorn",
             Self::UnicornRequirePostMessageTargetOrigin(_) => "unicorn",
             Self::UnicornSwitchCaseBraces(_) => "unicorn",
+            Self::UnicornSwitchCaseBreakPosition(_) => "unicorn",
             Self::UnicornTextEncodingIdentifierCase(_) => "unicorn",
             Self::UnicornThrowNewError(_) => "unicorn",
             Self::JsxA11YAltText(_) => "jsx_a11y",
@@ -11070,6 +11086,9 @@ impl RuleEnum {
             Self::UnicornSwitchCaseBraces(_) => Ok(Self::UnicornSwitchCaseBraces(
                 UnicornSwitchCaseBraces::from_configuration(value)?,
             )),
+            Self::UnicornSwitchCaseBreakPosition(_) => Ok(Self::UnicornSwitchCaseBreakPosition(
+                UnicornSwitchCaseBreakPosition::from_configuration(value)?,
+            )),
             Self::UnicornTextEncodingIdentifierCase(_) => {
                 Ok(Self::UnicornTextEncodingIdentifierCase(
                     UnicornTextEncodingIdentifierCase::from_configuration(value)?,
@@ -12119,6 +12138,7 @@ impl RuleEnum {
             Self::UnicornRequireNumberToFixedDigitsArgument(rule) => rule.to_configuration(),
             Self::UnicornRequirePostMessageTargetOrigin(rule) => rule.to_configuration(),
             Self::UnicornSwitchCaseBraces(rule) => rule.to_configuration(),
+            Self::UnicornSwitchCaseBreakPosition(rule) => rule.to_configuration(),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.to_configuration(),
             Self::UnicornThrowNewError(rule) => rule.to_configuration(),
             Self::JsxA11YAltText(rule) => rule.to_configuration(),
@@ -12834,6 +12854,7 @@ impl RuleEnum {
             Self::UnicornRequireNumberToFixedDigitsArgument(rule) => rule.run(node, ctx),
             Self::UnicornRequirePostMessageTargetOrigin(rule) => rule.run(node, ctx),
             Self::UnicornSwitchCaseBraces(rule) => rule.run(node, ctx),
+            Self::UnicornSwitchCaseBreakPosition(rule) => rule.run(node, ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run(node, ctx),
             Self::UnicornThrowNewError(rule) => rule.run(node, ctx),
             Self::JsxA11YAltText(rule) => rule.run(node, ctx),
@@ -13547,6 +13568,7 @@ impl RuleEnum {
             Self::UnicornRequireNumberToFixedDigitsArgument(rule) => rule.run_once(ctx),
             Self::UnicornRequirePostMessageTargetOrigin(rule) => rule.run_once(ctx),
             Self::UnicornSwitchCaseBraces(rule) => rule.run_once(ctx),
+            Self::UnicornSwitchCaseBreakPosition(rule) => rule.run_once(ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run_once(ctx),
             Self::UnicornThrowNewError(rule) => rule.run_once(ctx),
             Self::JsxA11YAltText(rule) => rule.run_once(ctx),
@@ -14354,6 +14376,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornSwitchCaseBraces(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornSwitchCaseBreakPosition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornThrowNewError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsxA11YAltText(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15073,6 +15096,7 @@ impl RuleEnum {
             Self::UnicornRequireNumberToFixedDigitsArgument(rule) => rule.should_run(ctx),
             Self::UnicornRequirePostMessageTargetOrigin(rule) => rule.should_run(ctx),
             Self::UnicornSwitchCaseBraces(rule) => rule.should_run(ctx),
+            Self::UnicornSwitchCaseBreakPosition(rule) => rule.should_run(ctx),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.should_run(ctx),
             Self::UnicornThrowNewError(rule) => rule.should_run(ctx),
             Self::JsxA11YAltText(rule) => rule.should_run(ctx),
@@ -16040,6 +16064,9 @@ impl RuleEnum {
                 UnicornRequirePostMessageTargetOrigin::IS_TSGOLINT_RULE
             }
             Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::IS_TSGOLINT_RULE,
+            Self::UnicornSwitchCaseBreakPosition(_) => {
+                UnicornSwitchCaseBreakPosition::IS_TSGOLINT_RULE
+            }
             Self::UnicornTextEncodingIdentifierCase(_) => {
                 UnicornTextEncodingIdentifierCase::IS_TSGOLINT_RULE
             }
@@ -16954,6 +16981,7 @@ impl RuleEnum {
                 UnicornRequirePostMessageTargetOrigin::HAS_CONFIG
             }
             Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::HAS_CONFIG,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::HAS_CONFIG,
             Self::UnicornTextEncodingIdentifierCase(_) => {
                 UnicornTextEncodingIdentifierCase::HAS_CONFIG
             }
@@ -17687,6 +17715,7 @@ impl RuleEnum {
             Self::UnicornRequireNumberToFixedDigitsArgument(rule) => rule.types_info(),
             Self::UnicornRequirePostMessageTargetOrigin(rule) => rule.types_info(),
             Self::UnicornSwitchCaseBraces(rule) => rule.types_info(),
+            Self::UnicornSwitchCaseBreakPosition(rule) => rule.types_info(),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.types_info(),
             Self::UnicornThrowNewError(rule) => rule.types_info(),
             Self::JsxA11YAltText(rule) => rule.types_info(),
@@ -18400,6 +18429,7 @@ impl RuleEnum {
             Self::UnicornRequireNumberToFixedDigitsArgument(rule) => rule.run_info(),
             Self::UnicornRequirePostMessageTargetOrigin(rule) => rule.run_info(),
             Self::UnicornSwitchCaseBraces(rule) => rule.run_info(),
+            Self::UnicornSwitchCaseBreakPosition(rule) => rule.run_info(),
             Self::UnicornTextEncodingIdentifierCase(rule) => rule.run_info(),
             Self::UnicornThrowNewError(rule) => rule.run_info(),
             Self::JsxA11YAltText(rule) => rule.run_info(),
@@ -19225,6 +19255,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornRequirePostMessageTargetOrigin::default(),
         ),
         RuleEnum::UnicornSwitchCaseBraces(UnicornSwitchCaseBraces::default()),
+        RuleEnum::UnicornSwitchCaseBreakPosition(UnicornSwitchCaseBreakPosition::default()),
         RuleEnum::UnicornTextEncodingIdentifierCase(UnicornTextEncodingIdentifierCase::default()),
         RuleEnum::UnicornThrowNewError(UnicornThrowNewError::default()),
         RuleEnum::JsxA11YAltText(JsxA11YAltText::default()),

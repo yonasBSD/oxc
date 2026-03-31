@@ -573,6 +573,7 @@ pub(crate) mod unicorn {
     pub mod require_number_to_fixed_digits_argument;
     pub mod require_post_message_target_origin;
     pub mod switch_case_braces;
+    pub mod switch_case_break_position;
     pub mod text_encoding_identifier_case;
     pub mod throw_new_error;
 }
