@@ -128,7 +128,7 @@ pub struct BasicOptions {
     /// Use this only when your project uses a non-standard tsconfig name or location.
     ///
     /// ::: warning
-    /// Avoid using this this option. It can cause differences between import resolution,
+    /// Avoid using this option. It can cause differences between import resolution,
     /// and type-aware linting. Type aware linting **does not** respect this option,
     /// and will always discover the appropriate `tsconfig.json` for each file automatically.
     /// :::
