@@ -100,6 +100,11 @@ impl Schema {
     pub fn structs(&self) -> Structs<'_> {
         Structs::new(self)
     }
+
+    /// Get iterator over all structs as mutable references.
+    pub fn structs_mut(&mut self) -> StructsMut<'_> {
+        StructsMut::new(self)
+    }
 }
 
 /// Methods for getting a specific type def (e.g. [`StructDef`]) for a [`TypeId`].
@@ -296,3 +301,33 @@ impl<'s> Iterator for Structs<'s> {
 }
 
 impl FusedIterator for Structs<'_> {}
+
+/// Iterator over structs, which produces mutable references.
+pub struct StructsMut<'s> {
+    iter: slice::IterMut<'s, TypeDef>,
+}
+
+impl<'s> StructsMut<'s> {
+    fn new(schema: &'s mut Schema) -> Self {
+        Self { iter: schema.types.iter_mut() }
+    }
+}
+
+impl<'s> Iterator for StructsMut<'s> {
+    type Item = &'s mut StructDef;
+
+    fn next(&mut self) -> Option<&'s mut StructDef> {
+        for type_def in &mut self.iter {
+            match type_def {
+                TypeDef::Struct(struct_def) => return Some(struct_def),
+                TypeDef::Enum(_) => {}
+                // Structs and enums are always first in `Schema::types`,
+                // so if we encounter a different type, iteration is done
+                _ => break,
+            }
+        }
+        None
+    }
+}
+
+impl FusedIterator for StructsMut<'_> {}

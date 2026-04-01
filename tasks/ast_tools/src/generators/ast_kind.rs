@@ -49,10 +49,8 @@ impl Generator for AstKindGenerator {
     /// Enums do not have an `AstKind`, unless included in `ENUMS_WHITE_LIST`.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         // Set `has_kind = true` for all visited structs
-        for type_def in &mut schema.types {
-            if let TypeDef::Struct(struct_def) = type_def {
-                struct_def.kind.has_kind = struct_def.visit.has_visitor();
-            }
+        for struct_def in schema.structs_mut() {
+            struct_def.kind.has_kind = struct_def.visit.has_visitor();
         }
 
         // Set `has_kind = false` for structs in black list
