@@ -521,7 +521,7 @@ impl<'s> StructSerializerGenerator<'s> {
 
             value.unwrap_or_else(|| {
                 panic!(
-                    "`#[estree(json_safe)]` is only valid on struct fields containing a `&str`, `Str`, or `Ident`: {}::{}",
+                    "`#[estree(json_safe)]` is only valid on struct fields containing a `&str`, `Str`, `Ident`, or `Option` of one of those: {}::{}",
                     struct_def.name(),
                     field.name(),
                 )
