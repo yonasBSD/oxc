@@ -5,7 +5,6 @@ use rustc_hash::FxHashMap;
 #[expect(unused_imports)]
 use serde::Serialize;
 
-use oxc_data_structures::slice_iter::SliceIter;
 use oxc_index::{IndexVec, define_index_type};
 
 mod defs;
@@ -247,19 +246,16 @@ impl<'s> Iterator for StructsAndEnums<'s> {
     type Item = StructOrEnum<'s>;
 
     fn next(&mut self) -> Option<StructOrEnum<'s>> {
-        if let Some(type_def) = self.iter.next() {
-            match type_def {
-                TypeDef::Struct(struct_def) => Some(StructOrEnum::Struct(struct_def)),
-                TypeDef::Enum(enum_def) => Some(StructOrEnum::Enum(enum_def)),
-                _ => {
-                    // Structs and enums are always first in `Schema::types`,
-                    // so if we encounter a different type, iteration is done.
-                    self.iter.advance_to_end();
-                    None
-                }
+        let type_def = self.iter.next()?;
+
+        match type_def {
+            TypeDef::Struct(struct_def) => Some(StructOrEnum::Struct(struct_def)),
+            TypeDef::Enum(enum_def) => Some(StructOrEnum::Enum(enum_def)),
+            _ => {
+                // Structs and enums are always first in `Schema::types`,
+                // so if we encounter a different type, iteration is done
+                None
             }
-        } else {
-            None
         }
     }
 }
