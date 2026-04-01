@@ -979,8 +979,7 @@ fn generate_option(
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
-            if ({none_condition}) return null;
-            return {inner_fn_name}({payload_offset});
+            return ({none_condition}) ? null : {inner_fn_name}({payload_offset});
         }}
     ");
 }
