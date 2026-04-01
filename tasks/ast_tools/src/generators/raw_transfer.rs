@@ -701,6 +701,45 @@ impl<'s> StructDeserializerGenerator<'s> {
             }
 
             field_name.clone()
+        } else if field.estree.from_span {
+            // Derive value from `sourceText.slice(start, end)` instead of deserializing.
+            // Field must be `Str`, `Ident`, `&str`, or `Option` containing one of those types.
+            let (inner_type, prefix) = if let TypeDef::Option(option_def) = field_type {
+                let inner_type = option_def.inner_type(self.schema);
+                let (none_condition, _) =
+                    get_option_none_condition_and_offset(option_def, inner_type, field_offset);
+                (inner_type, format!("({none_condition}) ? null : "))
+            } else {
+                (field_type, String::new())
+            };
+
+            if inner_type.as_primitive().is_none_or(|primitive_def| {
+                !matches!(primitive_def.name(), "Str" | "Ident" | "&str")
+            }) {
+                panic!(
+                    "`#[estree(from_span)]` can only be on a field of type `Str`, `Ident`, `&str`, or `Option` containing one of those types: `{}::{}`",
+                    struct_def.name(),
+                    field.name(),
+                );
+            }
+
+            // Check that struct has a `span: Span` field, and that it is flattened, so `start` and `end` are available
+            assert!(
+                struct_def.fields.iter().any(|field| {
+                    field.type_id == self.span_type_id
+                        && field.name() == "span"
+                        && should_flatten_field(field, self.schema)
+                }),
+                "`#[estree(from_span)]` can only be used on a field of a struct with a flattened `span: Span` field: `{}::{}`",
+                struct_def.name(),
+                field.name(),
+            );
+
+            inline = true;
+            self.dependent_field_names.insert("start".to_string());
+            self.dependent_field_names.insert("end".to_string());
+
+            format!("{prefix}sourceText.slice(start, end)")
         } else if let Some(converter_name) = &field.estree.via {
             let converter = self.schema.meta_by_name(converter_name);
             self.apply_converter(converter, struct_def, struct_offset).unwrap()
@@ -933,32 +972,9 @@ fn generate_option(
 
     let fn_name = option_def.deser_name(schema);
     let inner_fn_name = inner_type.deser_name(schema);
-    let inner_layout = inner_type.layout_64();
 
-    let (none_condition, payload_offset) = if option_def.layout_64().size == inner_layout.size {
-        let niche = inner_layout.niche.clone().unwrap();
-        let none_condition = match niche.size {
-            1 => format!("uint8[{}] === {}", pos_offset(niche.offset), niche.value()),
-            // 2 => format!("uint16[{}] === {}", pos_offset_shift(niche.offset, 1), niche.value()),
-            4 => format!("uint32[{}] === {}", pos_offset_shift(niche.offset, 2), niche.value()),
-            8 => {
-                // TODO: Use `float64[pos >> 3] === 0` instead of
-                // `uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0`?
-                let value = niche.value();
-                format!(
-                    "uint32[{}] === {} && uint32[{}] === {}",
-                    pos_offset_shift(niche.offset, 2),
-                    value & u128::from(u32::MAX),
-                    pos_offset_shift(niche.offset + 4, 2),
-                    value >> 32,
-                )
-            }
-            size => panic!("Invalid niche size: {size}"),
-        };
-        (none_condition, Cow::Borrowed("pos"))
-    } else {
-        ("uint8[pos] === 0".to_string(), pos_offset(inner_layout.align))
-    };
+    let (none_condition, payload_offset) =
+        get_option_none_condition_and_offset(option_def, inner_type, 0);
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -967,6 +983,41 @@ fn generate_option(
             return {inner_fn_name}({payload_offset});
         }}
     ");
+}
+
+/// Get condition for `Option`'s `None` value and offset of `Option`'s payload.
+fn get_option_none_condition_and_offset(
+    option_def: &OptionDef,
+    inner_type: &TypeDef,
+    offset: u32,
+) -> (String, Cow<'static, str>) {
+    let inner_layout = inner_type.layout_64();
+
+    if option_def.layout_64().size == inner_layout.size {
+        let niche = inner_layout.niche.clone().unwrap();
+        let niche_offset = offset + niche.offset;
+        let none_condition = match niche.size {
+            1 => format!("uint8[{}] === {}", pos_offset(niche_offset), niche.value()),
+            // 2 => format!("uint16[{}] === {}", pos_offset_shift(offset, 1), niche.value()),
+            4 => format!("uint32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
+            8 => {
+                // TODO: Use `float64[pos >> 3] === 0` instead of
+                // `uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0`?
+                let value = niche.value();
+                format!(
+                    "uint32[{}] === {} && uint32[{}] === {}",
+                    pos_offset_shift(niche_offset, 2),
+                    value & u128::from(u32::MAX),
+                    pos_offset_shift(niche_offset + 4, 2),
+                    value >> 32,
+                )
+            }
+            size => panic!("Invalid niche size: {size}"),
+        };
+        (none_condition, pos_offset(offset))
+    } else {
+        (format!("uint8[{}] === 0", pos_offset(offset)), pos_offset(offset + inner_layout.align))
+    }
 }
 
 /// Generate deserialize function for a `Box`.

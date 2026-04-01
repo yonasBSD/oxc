@@ -3152,28 +3152,35 @@ function deserializeNullLiteral(pos) {
 }
 
 function deserializeNumericLiteral(pos) {
-  let start, end;
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4);
   return {
     type: "Literal",
     value: deserializeF64(pos + 32),
-    raw: deserializeOptionStr(pos + 16),
-    start: (start = deserializeU32(pos)),
-    end: (end = deserializeU32(pos + 4)),
+    raw:
+      uint32[(pos + 16) >> 2] === 0 && uint32[(pos + 20) >> 2] === 0
+        ? null
+        : sourceText.slice(start, end),
+    start,
+    end,
     range: [start, end],
     parent,
   };
 }
 
 function deserializeStringLiteral(pos) {
-  let start,
-    end,
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
     previousParent = parent,
     node = (parent = {
       type: "Literal",
       value: null,
-      raw: deserializeOptionStr(pos + 32),
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
+      raw:
+        uint32[(pos + 32) >> 2] === 0 && uint32[(pos + 36) >> 2] === 0
+          ? null
+          : sourceText.slice(start, end),
+      start,
+      end,
       range: [start, end],
       parent,
     }),
@@ -3186,16 +3193,19 @@ function deserializeStringLiteral(pos) {
 }
 
 function deserializeBigIntLiteral(pos) {
-  let start,
-    end,
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
     previousParent = parent,
     node = (parent = {
       type: "Literal",
       value: null,
-      raw: deserializeOptionStr(pos + 32),
+      raw:
+        uint32[(pos + 32) >> 2] === 0 && uint32[(pos + 36) >> 2] === 0
+          ? null
+          : sourceText.slice(start, end),
       bigint: null,
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
+      start,
+      end,
       range: [start, end],
       parent,
     }),
@@ -3207,16 +3217,19 @@ function deserializeBigIntLiteral(pos) {
 }
 
 function deserializeRegExpLiteral(pos) {
-  let start,
-    end,
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4),
     previousParent = parent,
     node = (parent = {
       type: "Literal",
       value: null,
-      raw: deserializeOptionStr(pos + 48),
+      raw:
+        uint32[(pos + 48) >> 2] === 0 && uint32[(pos + 52) >> 2] === 0
+          ? null
+          : sourceText.slice(start, end),
       regex: null,
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
+      start,
+      end,
       range: [start, end],
       parent,
     }),
@@ -3707,13 +3720,17 @@ function deserializeJSXSpreadChild(pos) {
 }
 
 function deserializeJSXText(pos) {
-  let start, end;
+  let start = deserializeU32(pos),
+    end = deserializeU32(pos + 4);
   return {
     type: "JSXText",
     value: deserializeStr(pos + 16),
-    raw: deserializeOptionStr(pos + 32),
-    start: (start = deserializeU32(pos)),
-    end: (end = deserializeU32(pos + 4)),
+    raw:
+      uint32[(pos + 32) >> 2] === 0 && uint32[(pos + 36) >> 2] === 0
+        ? null
+        : sourceText.slice(start, end),
+    start,
+    end,
     range: [start, end],
     parent,
   };
