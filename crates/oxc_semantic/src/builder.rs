@@ -774,13 +774,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.visit_decorators(&class.decorators);
         self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
-        if let Some(id) = &class.id {
-            self.visit_binding_identifier(id);
-        }
 
         if class.is_expression() {
-            // We need to bind class expression in the class scope
+            // We need to bind class expressions in the class scope before visiting the identifier.
             class.bind(self);
+        }
+
+        if let Some(id) = &class.id {
+            self.visit_binding_identifier(id);
         }
 
         if let Some(type_parameters) = &class.type_parameters {
