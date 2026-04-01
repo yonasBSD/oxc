@@ -33,8 +33,7 @@ pub fn generate_ancestor(schema: &Schema) -> TokenStream {
 
     let mut discriminant = 1u16;
 
-    for type_def in &schema.types {
-        let TypeDef::Struct(struct_def) = type_def else { continue };
+    for struct_def in schema.structs() {
         if !struct_def.visit.has_visitor() {
             continue;
         }

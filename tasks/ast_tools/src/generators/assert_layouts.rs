@@ -797,9 +797,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
 /// `#[ast]` macro will re-order struct fields in order we provide here.
 fn generate_struct_details(schema: &Schema) -> Output {
     let mut map = PhfMapGen::new();
-    for type_def in &schema.types {
-        let TypeDef::Struct(struct_def) = type_def else { continue };
-
+    for struct_def in schema.structs() {
         // Get layout indexes of fields in source order.
         // If struct as written already has fields in layout order, then no-reordering is required,
         // in which case output `None`.

@@ -64,9 +64,7 @@ fn generate(schema: &Schema, codegen: &Codegen) -> TokenStream {
     ]
     .map(|type_name| schema.type_names[type_name]);
 
-    let methods = schema.types.iter().filter_map(|type_def| {
-        let struct_def = type_def.as_struct()?;
-
+    let methods = schema.structs().filter_map(|struct_def| {
         // Skip `Comment` because we handle adjusting comment spans separately
         if struct_def.id == comment_type_id {
             return None;

@@ -95,6 +95,11 @@ impl Schema {
     pub fn structs_and_enums(&self) -> StructsAndEnums<'_> {
         StructsAndEnums::new(self)
     }
+
+    /// Get iterator over all structs.
+    pub fn structs(&self) -> Structs<'_> {
+        Structs::new(self)
+    }
 }
 
 /// Methods for getting a specific type def (e.g. [`StructDef`]) for a [`TypeId`].
@@ -261,3 +266,33 @@ impl<'s> Iterator for StructsAndEnums<'s> {
 }
 
 impl FusedIterator for StructsAndEnums<'_> {}
+
+/// Iterator over structs.
+pub struct Structs<'s> {
+    iter: slice::Iter<'s, TypeDef>,
+}
+
+impl<'s> Structs<'s> {
+    fn new(schema: &'s Schema) -> Self {
+        Self { iter: schema.types.iter() }
+    }
+}
+
+impl<'s> Iterator for Structs<'s> {
+    type Item = &'s StructDef;
+
+    fn next(&mut self) -> Option<&'s StructDef> {
+        for type_def in &mut self.iter {
+            match type_def {
+                TypeDef::Struct(struct_def) => return Some(struct_def),
+                TypeDef::Enum(_) => {}
+                // Structs and enums are always first in `Schema::types`,
+                // so if we encounter a different type, iteration is done
+                _ => break,
+            }
+        }
+        None
+    }
+}
+
+impl FusedIterator for Structs<'_> {}

@@ -81,9 +81,7 @@ impl Generator for AstKindGenerator {
         let mut as_methods = quote!();
 
         let mut next_index = 0u16;
-        for type_def in &schema.types {
-            let Some(struct_def) = type_def.as_struct() else { continue };
-
+        for struct_def in schema.structs() {
             if !struct_def.kind.has_kind {
                 continue;
             }
