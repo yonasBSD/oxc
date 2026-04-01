@@ -23,7 +23,7 @@ use crate::{
     output::{Output, output_path},
     schema::{
         Def, Discriminant, EnumDef, FieldDef, PointerKind, PrimitiveDef, Schema, StructDef,
-        TypeDef, TypeId, Visibility,
+        StructOrEnum, TypeDef, TypeId, Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
     utils::{format_cow, number_lit},
@@ -607,7 +607,7 @@ impl LayoutCalculator<'_> {
 fn generate_assertions(schema: &Schema) -> Vec<Output> {
     let mut assertions = FxHashMap::default();
 
-    for type_def in &schema.types {
+    for type_def in schema.structs_and_enums() {
         generate_layout_assertions(type_def, &mut assertions, schema);
     }
 
@@ -628,18 +628,17 @@ fn generate_assertions(schema: &Schema) -> Vec<Output> {
 
 /// Generate layout assertions for a type.
 fn generate_layout_assertions<'s>(
-    type_def: &TypeDef,
+    type_def: StructOrEnum<'s>,
     assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
     schema: &'s Schema,
 ) {
     match type_def {
-        TypeDef::Struct(struct_def) => {
+        StructOrEnum::Struct(struct_def) => {
             generate_layout_assertions_for_struct(struct_def, assertions, schema);
         }
-        TypeDef::Enum(enum_def) => {
+        StructOrEnum::Enum(enum_def) => {
             generate_layout_assertions_for_enum(enum_def, assertions, schema);
         }
-        _ => {}
     }
 }
 

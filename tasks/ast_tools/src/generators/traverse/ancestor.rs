@@ -15,7 +15,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use crate::{
-    schema::{Def, FieldDef, Schema, StructDef, TypeDef},
+    schema::{Def, FieldDef, Schema, StructDef, StructOrEnum, TypeDef},
     utils::upper_case_first,
 };
 
@@ -285,15 +285,18 @@ pub fn generate_ancestor(schema: &Schema) -> TokenStream {
 /// so we filter to types in the `oxc_ast` crate with import path starting with `::ast::`.
 fn field_is_visited(field: &FieldDef, schema: &Schema) -> bool {
     let inner_type = field.type_def(schema).innermost_type(schema);
-    is_ast_type_with_visitor(inner_type, schema)
+    if let Some(inner_type) = inner_type.as_struct_or_enum() {
+        is_ast_type_with_visitor(inner_type, schema)
+    } else {
+        false
+    }
 }
 
 /// Check if a type is an AST type (from `oxc_ast::ast::*`) with a visitor.
-pub fn is_ast_type_with_visitor(type_def: &TypeDef, schema: &Schema) -> bool {
+pub fn is_ast_type_with_visitor(type_def: StructOrEnum<'_>, schema: &Schema) -> bool {
     match type_def {
-        TypeDef::Struct(s) => s.visit.has_visitor() && is_ast_file(s.file(schema)),
-        TypeDef::Enum(e) => e.visit.has_visitor() && is_ast_file(e.file(schema)),
-        _ => false,
+        StructOrEnum::Struct(s) => s.visit.has_visitor() && is_ast_file(s.file(schema)),
+        StructOrEnum::Enum(e) => e.visit.has_visitor() && is_ast_file(e.file(schema)),
     }
 }
 
