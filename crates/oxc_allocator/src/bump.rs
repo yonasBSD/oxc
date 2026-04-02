@@ -2441,7 +2441,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 #[derive(Debug)]
 pub struct ChunkIter<'a, const MIN_ALIGN: usize = 1> {
     raw: ChunkRawIter<'a, MIN_ALIGN>,
-    bump: PhantomData<&'a mut Bump>,
+    bump: PhantomData<&'a mut Bump<MIN_ALIGN>>,
 }
 
 impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
