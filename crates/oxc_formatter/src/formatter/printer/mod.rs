@@ -95,7 +95,7 @@ impl<'a> Printer<'a> {
 
         let args = stack.top();
         match element {
-            FormatElement::Space | FormatElement::HardSpace => {
+            FormatElement::Space => {
                 if self.state.line_width > 0 {
                     self.state.pending_space = true;
                 }
@@ -972,12 +972,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             FormatElement::Space => {
                 if self.state.line_width > 0 {
                     self.state.pending_space = true;
-                }
-            }
-            FormatElement::HardSpace => {
-                self.state.line_width += 1;
-                if self.state.line_width > usize::from(self.options().print_width) {
-                    return Ok(Fits::No);
                 }
             }
             FormatElement::Line(line_mode) => {
