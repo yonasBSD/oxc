@@ -25,6 +25,4 @@ pnpm-lock.yaml
 /crates/oxc_transformer_plugins @overlookmotel @dunqing
 /crates/oxc_traverse @overlookmotel
 
-/editors @camc314
-
 /tasks/ast_tools @overlookmotel
