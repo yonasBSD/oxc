@@ -5,13 +5,19 @@ let uint8,
   uint32,
   float64,
   sourceText,
+  sourceTextLatin,
+  sourceEndPos = 0,
   firstNonAsciiPos = 0;
 
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
-  { fromCharCode } = String;
+  { fromCharCode } = String,
+  { latin1Slice } = Buffer.prototype,
+  stringDecodeArrays = Array(65).fill(null);
+for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
+  sourceEndPos = sourceByteLen;
   let data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
   resetBuffer();
   return data;
@@ -22,18 +28,21 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
   uint32 = buffer.uint32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
-  if (sourceText.length === sourceByteLen) firstNonAsciiPos = sourceByteLen;
-  else {
+  if (sourceText.length === sourceByteLen) {
+    firstNonAsciiPos = sourceByteLen;
+    sourceTextLatin = sourceText;
+  } else {
     let i = 0;
     for (; i < sourceByteLen && uint8[i] < 128; i++);
     firstNonAsciiPos = i;
+    sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
   }
   return deserialize(uint32[536870900]);
 }
 
 export function resetBuffer() {
-  // Clear buffer and source text string to allow them to be garbage collected
-  uint8 = uint32 = float64 = sourceText = void 0;
+  // Clear buffer and source text strings to allow them to be garbage collected
+  uint8 = uint32 = float64 = sourceText = sourceTextLatin = void 0;
 }
 
 function deserializeProgram(pos) {
@@ -5089,22 +5098,26 @@ function deserializeStr(pos) {
   if (len === 0) return "";
   pos = uint32[pos32];
   let end = pos + len;
-  if (end <= firstNonAsciiPos) return sourceText.substr(pos, len);
-  // Use `TextDecoder` for strings longer than 9 bytes.
-  // For shorter strings, the byte-by-byte loop below avoids native call overhead.
-  if (len > 9) return decodeStr(uint8.subarray(pos, end));
-  // Shorter strings decode by hand to avoid native call
-  let out = "",
-    c;
-  do {
-    c = uint8[pos++];
-    if (c < 128) out += fromCharCode(c);
-    else {
-      out += decodeStr(uint8.subarray(pos - 1, end));
-      break;
-    }
-  } while (pos < end);
-  return out;
+  if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+  // Use `TextDecoder` for strings longer than 64 bytes
+  if (len > 64) return decodeStr(uint8.subarray(pos, end));
+  if (pos < sourceEndPos) {
+    // Check if all bytes are ASCII, use `TextDecoder` if not
+    for (let i = pos; i < end; i++) if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
+    // String is all ASCII, so slice from `sourceTextLatin`
+    return sourceTextLatin.substr(pos, len);
+  }
+  // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+  // Copy bytes into temp array.
+  // If any byte is non-ASCII, use `TextDecoder`.
+  let arr = stringDecodeArrays[len];
+  for (let i = 0; i < len; i++) {
+    let b = uint8[pos + i];
+    if (b >= 128) return decodeStr(uint8.subarray(pos, end));
+    arr[i] = b;
+  }
+  // Call `fromCharCode` with temp array
+  return fromCharCode.apply(null, arr);
 }
 
 function deserializeVecComment(pos) {

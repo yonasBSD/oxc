@@ -143,14 +143,26 @@ fn generate_deserializers(
         import {{ comments, initComments }} from '../plugins/comments.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceStartPos = 0, firstNonAsciiPos = 0;
+        let uint8, uint32, float64, sourceText, sourceTextLatin,
+            sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
         let getLoc;
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
-            decodeStr = textDecoder.decode.bind(textDecoder),
-            {{ fromCharCode }} = String;
+            decodeStr = textDecoder.decode.bind(textDecoder);
+
+        const {{ fromCharCode }} = String,
+            {{ latin1Slice }} = Buffer.prototype;
+
+        const STRING_DECODE_CROSSOVER = 64;
+
+        // Arrays used by `deserializeStr` for passing to `String.fromCharCode`.
+        // These arrays are reused over and over, avoiding allocating a new temporary array for each string.
+        const stringDecodeArrays = new Array(STRING_DECODE_CROSSOVER + 1).fill(null);
+        for (let i = 0; i <= STRING_DECODE_CROSSOVER; i++) {{
+            stringDecodeArrays[i] = new Array(i).fill(0);
+        }}
 
         /* IF LOC */
         const NodeProto = Object.create(Object.prototype, {{
@@ -166,6 +178,7 @@ fn generate_deserializers(
 
         /* IF !LINTER */
         export function deserialize(buffer, sourceText, sourceByteLen) {{
+            sourceEndPos = sourceByteLen;
             const data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
             resetBuffer();
             return data;
@@ -191,22 +204,29 @@ fn generate_deserializers(
             // Find first non-ASCII byte in source region.
             // `sourceText.substr()` can be used for strings which are within source text and ending before
             // this position, since byte offsets equal char offsets in the all-ASCII prefix.
+            // Also decode source text as Latin-1 (or reuse `sourceText` if it's all ASCII).
             if (LINTER) {{
                 if (sourceIsAscii === true) {{
                     firstNonAsciiPos = sourceStartPos + sourceByteLen;
+                    sourceTextLatin = sourceText;
                 }} else {{
                     let i = sourceStartPos;
                     const sourceEndPos = sourceStartPos + sourceByteLen;
                     for (; i < sourceEndPos && uint8[i] < 128; i++);
                     firstNonAsciiPos = i;
+
+                    sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
                 }}
             }} else {{
                 if (sourceIsAscii === true) {{
                     firstNonAsciiPos = sourceByteLen;
+                    sourceTextLatin = sourceText;
                 }} else {{
                     let i = 0;
                     for (; i < sourceByteLen && uint8[i] < 128; i++);
                     firstNonAsciiPos = i;
+
+                    sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
                 }}
             }}
 
@@ -216,8 +236,8 @@ fn generate_deserializers(
         }}
 
         export function resetBuffer() {{
-            // Clear buffer and source text string to allow them to be garbage collected
-            uint8 = uint32 = float64 = sourceText = undefined;
+            // Clear buffer and source text strings to allow them to be garbage collected
+            uint8 = uint32 = float64 = sourceText = sourceTextLatin = undefined;
         }}
     ");
 
@@ -930,54 +950,70 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
         len = uint32[pos32 + 2];
+
     if (len === 0) return '';
 
     pos = uint32[pos32];
 
     const end = pos + len;
 
-    if (LINTER) {
-        // Note: Tried reducing this check to a single branch by making the comparison the equivalent of this Rust:
-        // `end.wrapping_sub(sourceStartPos) <= firstNonAsciiOffset`.
-        //
-        // The JS versions tried were:
-        // - `((end - sourceStartPos) >>> 0) <= firstNonAsciiOffset`
-        // - `((end - sourceStartPos) & 0x7FFF_FFFF) <= firstNonAsciiOffset`
-        // But it turned out that these are both slower by 5-10% on files which are all ASCII.
-        //
-        // `>>>` is slower as V8 can't assume result fits in an SMI (which is a 32-bit *signed* integer),
-        // as result could be greater or equal to `2 ** 31`. So it converts both the comparison's operands to `float64`s
-        // and does float compare (which is slower than integer compare).
-        //
-        // `& 0x7FFF_FFFF` is slower as it has a longer chain of data dependencies than the 2 independent
-        // branch comparisons.
-        //
-        // Both branches are very predictable, so 2 branches wins.
-        if (pos >= sourceStartPos && end <= firstNonAsciiPos) {
-            return sourceText.substr(pos - sourceStartPos, len);
+    /* IF !LINTER */
+    if (end <= firstNonAsciiPos) return sourceTextLatin.substr(pos, len);
+    /* END_IF */
+
+    /* IF LINTER */
+    // Note: Tried reducing this check to a single branch by making the comparison the equivalent of this Rust:
+    // `end.wrapping_sub(sourceStartPos) <= firstNonAsciiOffset`.
+    //
+    // The JS versions tried were:
+    // - `((end - sourceStartPos) >>> 0) <= firstNonAsciiOffset`
+    // - `((end - sourceStartPos) & 0x7FFF_FFFF) <= firstNonAsciiOffset`
+    // But it turned out that these are both slower by 5-10% on files which are all ASCII.
+    //
+    // `>>>` is slower as V8 can't assume result fits in an SMI (which is a 32-bit *signed* integer),
+    // as result could be greater or equal to `2 ** 31`. So it converts both the comparison's operands to `float64`s
+    // and does float compare (which is slower than integer compare).
+    //
+    // `& 0x7FFF_FFFF` is slower as it has a longer chain of data dependencies than the 2 independent
+    // branch comparisons.
+    //
+    // Both branches are very predictable, so 2 branches wins.
+    const isInSourceRegion = pos >= sourceStartPos;
+    if (isInSourceRegion && end <= firstNonAsciiPos) {
+        return sourceTextLatin.substr(pos - sourceStartPos, len);
+    }
+    /* END_IF */
+
+    // Use `TextDecoder` for strings longer than 64 bytes
+    if (len > STRING_DECODE_CROSSOVER) return decodeStr(uint8.subarray(pos, end));
+
+    // If string is in source region, use slice of `sourceTextLatin` if all ASCII
+    /* IF !LINTER */
+    const isInSourceRegion = pos < sourceEndPos;
+    /* END_IF */
+
+    if (isInSourceRegion) {
+        // Check if all bytes are ASCII, use `TextDecoder` if not
+        for (let i = pos; i < end; i++) {
+            if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
         }
-    } else {
-        if (end <= firstNonAsciiPos) return sourceText.substr(pos, len);
+
+        // String is all ASCII, so slice from `sourceTextLatin`
+        return sourceTextLatin.substr(LINTER ? pos - sourceStartPos : pos, len);
     }
 
-    // Use `TextDecoder` for strings longer than 9 bytes.
-    // For shorter strings, the byte-by-byte loop below avoids native call overhead.
-    if (len > 9) return decodeStr(uint8.subarray(pos, end));
+    // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
+    // Copy bytes into temp array.
+    // If any byte is non-ASCII, use `TextDecoder`.
+    const arr = stringDecodeArrays[len];
+    for (let i = 0; i < len; i++) {
+        const b = uint8[pos + i];
+        if (b >= 128) return decodeStr(uint8.subarray(pos, end));
+        arr[i] = b;
+    }
 
-    // Shorter strings decode by hand to avoid native call
-    let out = '',
-        c;
-    do {
-        c = uint8[pos++];
-        if (c < 0x80) {
-            out += fromCharCode(c);
-        } else {
-            out += decodeStr(uint8.subarray(pos - 1, end));
-            break;
-        }
-    } while (pos < end);
-
-    return out;
+    // Call `fromCharCode` with temp array
+    return fromCharCode.apply(null, arr);
 ";
 
 /// Generate deserialize function for an `Option`.
