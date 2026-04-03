@@ -176,9 +176,7 @@ fn generate_deserializers(
         /* IF !LINTER */
         export function deserialize(buffer, sourceText, sourceByteLen) {{
             sourceEndPos = sourceByteLen;
-            const data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
-            resetBuffer();
-            return data;
+            return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
         }}
         /* END_IF */
 
@@ -229,7 +227,9 @@ fn generate_deserializers(
 
             if (LOC) getLoc = getLocInput;
 
-            return deserialize(uint32[{data_pointer_pos_32}]);
+            const data = deserialize(uint32[{data_pointer_pos_32}]);
+            resetBuffer();
+            return data;
         }}
 
         export function resetBuffer() {{

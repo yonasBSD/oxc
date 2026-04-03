@@ -16,9 +16,7 @@ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
   sourceEndPos = sourceByteLen;
-  let data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
-  resetBuffer();
-  return data;
+  return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
 }
 
 function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {
@@ -35,7 +33,9 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
     firstNonAsciiPos = i;
     sourceTextLatin = latin1Slice.call(uint8, 0, sourceByteLen);
   }
-  return deserialize(uint32[536870900]);
+  let data = deserialize(uint32[536870900]);
+  resetBuffer();
+  return data;
 }
 
 export function resetBuffer() {

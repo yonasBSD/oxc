@@ -55,7 +55,9 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
     sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
   }
   getLoc = getLocInput;
-  return deserialize(uint32[536870900]);
+  let data = deserialize(uint32[536870900]);
+  resetBuffer();
+  return data;
 }
 
 export function resetBuffer() {
