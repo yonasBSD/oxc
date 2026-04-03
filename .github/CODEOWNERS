@@ -7,6 +7,7 @@
 Cargo.lock
 pnpm-lock.yaml
 
+/apps/oxfmt @leaysgur
 /apps/oxlint @camc314
 /apps/oxlint/conformance @camc314 @overlookmotel
 /apps/oxlint/src-js @camc314 @overlookmotel
@@ -15,7 +16,7 @@ pnpm-lock.yaml
 
 /crates/oxc_allocator @overlookmotel
 /crates/oxc_data_structures @overlookmotel
-/crates/oxc_formatter @dunqing
+/crates/oxc_formatter @dunqing @leaysgur
 /crates/oxc_isolated_declarations @dunqing
 /crates/oxc_language_server @camc314 @sysix
 /crates/oxc_linter @camc314
