@@ -141,13 +141,13 @@ fn generate_deserializers(
         /* IF LINTER */
         import {{ tokens, initTokens }} from '../plugins/tokens.js';
         import {{ comments, initComments }} from '../plugins/comments.js';
+        import {{ getNodeLoc }} from '../plugins/location.js';
         /* END_IF */
 
         let uint8, uint32, float64, sourceText, sourceTextLatin,
             sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
-        let getLoc;
 
         const {{ fromCharCode }} = String,
             {{ utf8Slice, latin1Slice }} = Buffer.prototype;
@@ -161,12 +161,12 @@ fn generate_deserializers(
             stringDecodeArrays[i] = new Array(i).fill(0);
         }}
 
-        /* IF LOC */
+        /* IF LINTER */
         const NodeProto = Object.create(Object.prototype, {{
             loc: {{
                 // Note: Not configurable
                 get() {{
-                    return getLoc(this);
+                    return getNodeLoc(this);
                 }},
                 enumerable: true,
             }}
@@ -176,18 +176,18 @@ fn generate_deserializers(
         /* IF !LINTER */
         export function deserialize(buffer, sourceText, sourceByteLen) {{
             sourceEndPos = sourceByteLen;
-            return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
+            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
         }}
         /* END_IF */
 
         /* IF LINTER */
-        export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen, getLoc) {{
+        export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen) {{
             sourceStartPos = sourceStartPosInput;
-            return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
+            return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
         }}
         /* END_IF */
 
-        function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {{
+        function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
@@ -225,8 +225,6 @@ fn generate_deserializers(
                 }}
             }}
 
-            if (LOC) getLoc = getLocInput;
-
             const data = deserialize(uint32[{data_pointer_pos_32}]);
             resetBuffer();
             return data;
@@ -242,18 +240,14 @@ fn generate_deserializers(
     #[rustfmt::skip]
     let code_type_definition_linter = "
         import type { Program } from './types.d.ts';
-        import type { Node } from '../plugins/types.ts';
-        import type { Location as SourceLocation } from '../plugins/location.ts';
 
         type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
-        type GetLoc = (node: Node) => SourceLocation;
 
         export declare function deserializeProgramOnly(
             buffer: BufferWithArrays,
             sourceText: string,
             sourceStartPosInput: number,
             sourceByteLen: number,
-            getLoc: GetLoc
         ): Program;
 
         export declare function resetBuffer(): void;

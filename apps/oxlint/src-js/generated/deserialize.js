@@ -3,6 +3,7 @@
 
 import { tokens, initTokens } from "../plugins/tokens.js";
 import { comments, initComments } from "../plugins/comments.js";
+import { getNodeLoc } from "../plugins/location.js";
 
 let uint8,
   uint32,
@@ -11,8 +12,7 @@ let uint8,
   sourceTextLatin,
   sourceStartPos = 0,
   firstNonAsciiPos = 0,
-  parent = null,
-  getLoc;
+  parent = null;
 
 const { fromCharCode } = String,
   { utf8Slice, latin1Slice } = Buffer.prototype,
@@ -22,24 +22,18 @@ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 const NodeProto = Object.create(Object.prototype, {
   loc: {
     get() {
-      return getLoc(this);
+      return getNodeLoc(this);
     },
     enumerable: true,
   },
 });
 
-export function deserializeProgramOnly(
-  buffer,
-  sourceText,
-  sourceStartPosInput,
-  sourceByteLen,
-  getLoc,
-) {
+export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen) {
   sourceStartPos = sourceStartPosInput;
-  return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
+  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeProgram);
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
@@ -54,7 +48,6 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
     firstNonAsciiPos = i;
     sourceTextLatin = latin1Slice.call(uint8, sourceStartPos, sourceEndPos);
   }
-  getLoc = getLocInput;
   let data = deserialize(uint32[536870900]);
   resetBuffer();
   return data;

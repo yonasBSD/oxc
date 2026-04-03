@@ -16,10 +16,10 @@ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
   sourceEndPos = sourceByteLen;
-  return deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
+  return deserializeWith(buffer, sourceText, sourceByteLen, deserializeRawTransferData);
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;

@@ -15,7 +15,7 @@ import { resetComments } from "./comments.ts";
 import * as commentMethods from "./comments_methods.ts";
 import { ecmaVersion } from "./context.ts";
 import * as locationMethods from "./location.ts";
-import { getNodeLoc, initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
+import { initLines, lines, lineStartIndices, resetLinesAndLocs } from "./location.ts";
 import { resetScopeManager, SCOPE_MANAGER } from "./scope.ts";
 import * as scopeMethods from "./scope.ts";
 import { resetTokens } from "./tokens.ts";
@@ -75,7 +75,7 @@ export function initAst(): void {
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
 
-  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen, getNodeLoc);
+  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen);
 
   // In conformance tests, fix AST when parsing as ES3
   if (CONFORMANCE) fixES3Ast();
