@@ -5,8 +5,6 @@ let uint8,
   uint32,
   float64,
   sourceText,
-  sourceIsAscii,
-  sourceEndPos,
   firstNonAsciiPos,
   parent = null;
 
@@ -15,7 +13,6 @@ const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   { fromCharCode } = String;
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
-  sourceEndPos = sourceByteLen;
   let data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
   resetBuffer();
   return data;
@@ -26,14 +23,11 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
   uint32 = buffer.uint32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
-  sourceIsAscii = sourceText.length === sourceByteLen;
-  if (!sourceIsAscii) {
-    firstNonAsciiPos = sourceByteLen;
-    for (let i = 0; i < sourceByteLen; i++)
-      if (uint8[i] >= 128) {
-        firstNonAsciiPos = i;
-        break;
-      }
+  if (sourceText.length === sourceByteLen) firstNonAsciiPos = sourceByteLen;
+  else {
+    let i = 0;
+    for (; i < sourceByteLen && uint8[i] < 128; i++);
+    firstNonAsciiPos = i;
   }
   return deserialize(uint32[536870900]);
 }
@@ -5628,11 +5622,10 @@ function deserializeStr(pos) {
     len = uint32[pos32 + 2];
   if (len === 0) return "";
   pos = uint32[pos32];
-  if (pos < sourceEndPos && (sourceIsAscii || pos + len <= firstNonAsciiPos))
-    return sourceText.substr(pos, len);
+  let end = pos + len;
+  if (end <= firstNonAsciiPos) return sourceText.substr(pos, len);
   // Use `TextDecoder` for strings longer than 9 bytes.
   // For shorter strings, the byte-by-byte loop below avoids native call overhead.
-  let end = pos + len;
   if (len > 9) return decodeStr(uint8.subarray(pos, end));
   // Shorter strings decode by hand to avoid native call
   let out = "",

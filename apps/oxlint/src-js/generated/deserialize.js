@@ -8,7 +8,6 @@ let uint8,
   uint32,
   float64,
   sourceText,
-  sourceIsAscii,
   sourceStartPos,
   firstNonAsciiPos,
   parent = null,
@@ -42,14 +41,12 @@ function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, de
   uint32 = buffer.uint32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
-  sourceIsAscii = sourceText.length === sourceByteLen;
-  if (!sourceIsAscii) {
-    firstNonAsciiPos = sourceByteLen;
-    for (let i = sourceStartPos, e = sourceStartPos + sourceByteLen; i < e; i++)
-      if (uint8[i] >= 128) {
-        firstNonAsciiPos = i - sourceStartPos;
-        break;
-      }
+  if (sourceText.length === sourceByteLen) firstNonAsciiPos = sourceStartPos + sourceByteLen;
+  else {
+    let i = sourceStartPos,
+      sourceEndPos = sourceStartPos + sourceByteLen;
+    for (; i < sourceEndPos && uint8[i] < 128; i++);
+    firstNonAsciiPos = i;
   }
   getLoc = getLocInput;
   return deserialize(uint32[536870900]);
@@ -5883,11 +5880,27 @@ function deserializeStr(pos) {
     len = uint32[pos32 + 2];
   if (len === 0) return "";
   pos = uint32[pos32];
-  if (pos >= sourceStartPos && (sourceIsAscii || pos - sourceStartPos + len <= firstNonAsciiPos))
+  let end = pos + len;
+  // Note: Tried reducing this check to a single branch by making the comparison the equivalent of this Rust:
+  // `end.wrapping_sub(sourceStartPos) <= firstNonAsciiOffset`.
+  //
+  // The JS versions tried were:
+  // - `((end - sourceStartPos) >>> 0) <= firstNonAsciiOffset`
+  // - `((end - sourceStartPos) & 0x7FFF_FFFF) <= firstNonAsciiOffset`
+  // But it turned out that these are both slower by 5-10% on files which are all ASCII.
+  //
+  // `>>>` is slower as V8 can't assume result fits in an SMI (which is a 32-bit *signed* integer),
+  // as result could be greater or equal to `2 ** 31`. So it converts both the comparison's operands to `float64`s
+  // and does float compare (which is slower than integer compare).
+  //
+  // `& 0x7FFF_FFFF` is slower as it has a longer chain of data dependencies than the 2 independent
+  // branch comparisons.
+  //
+  // Both branches are very predictable, so 2 branches wins.
+  if (pos >= sourceStartPos && end <= firstNonAsciiPos)
     return sourceText.substr(pos - sourceStartPos, len);
   // Use `TextDecoder` for strings longer than 9 bytes.
   // For shorter strings, the byte-by-byte loop below avoids native call overhead.
-  let end = pos + len;
   if (len > 9) return decodeStr(uint8.subarray(pos, end));
   // Shorter strings decode by hand to avoid native call
   let out = "",
