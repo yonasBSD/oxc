@@ -5,7 +5,7 @@ let uint8,
   uint32,
   float64,
   sourceText,
-  firstNonAsciiPos,
+  firstNonAsciiPos = 0,
   parent = null;
 
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),

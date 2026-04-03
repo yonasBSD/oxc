@@ -8,8 +8,8 @@ let uint8,
   uint32,
   float64,
   sourceText,
-  sourceStartPos,
-  firstNonAsciiPos,
+  sourceStartPos = 0,
+  firstNonAsciiPos = 0,
   parent = null,
   getLoc;
 

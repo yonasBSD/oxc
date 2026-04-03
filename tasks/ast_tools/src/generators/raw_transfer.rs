@@ -143,7 +143,7 @@ fn generate_deserializers(
         import {{ comments, initComments }} from '../plugins/comments.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceStartPos, firstNonAsciiPos;
+        let uint8, uint32, float64, sourceText, sourceStartPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
         let getLoc;
