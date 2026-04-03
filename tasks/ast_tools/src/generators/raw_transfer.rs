@@ -150,7 +150,7 @@ fn generate_deserializers(
 
         const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
             decodeStr = textDecoder.decode.bind(textDecoder),
-            {{ fromCodePoint }} = String;
+            {{ fromCharCode }} = String;
 
         /* IF LOC */
         const NodeProto = Object.create(Object.prototype, {{
@@ -948,7 +948,7 @@ static STR_DESERIALIZER_BODY: &str = "
     do {
         c = uint8[pos++];
         if (c < 0x80) {
-            out += fromCodePoint(c);
+            out += fromCharCode(c);
         } else {
             out += decodeStr(uint8.subarray(pos - 1, end));
             break;

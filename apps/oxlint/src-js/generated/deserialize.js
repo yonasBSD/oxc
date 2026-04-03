@@ -16,7 +16,7 @@ let uint8,
 
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
-  { fromCodePoint } = String,
+  { fromCharCode } = String,
   NodeProto = Object.create(Object.prototype, {
     loc: {
       get() {
@@ -5894,7 +5894,7 @@ function deserializeStr(pos) {
     c;
   do {
     c = uint8[pos++];
-    if (c < 128) out += fromCodePoint(c);
+    if (c < 128) out += fromCharCode(c);
     else {
       out += decodeStr(uint8.subarray(pos - 1, end));
       break;
