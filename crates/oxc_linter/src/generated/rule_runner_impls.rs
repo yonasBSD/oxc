@@ -4322,6 +4322,13 @@ impl RuleRunner for crate::rules::vitest::prefer_import_in_mock::PreferImportInM
 }
 
 impl RuleRunner
+    for crate::rules::vitest::prefer_importing_vitest_globals::PreferImportingVitestGlobals
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
+impl RuleRunner
     for crate::rules::vitest::prefer_strict_boolean_matchers::PreferStrictBooleanMatchers
 {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
