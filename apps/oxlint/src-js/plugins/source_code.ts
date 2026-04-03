@@ -30,8 +30,7 @@ import type { ScopeManager } from "./scope.ts";
 import type { Token } from "./tokens.ts";
 import type { BufferWithArrays, Node } from "./types.ts";
 
-// Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
+const { utf8Slice } = Buffer.prototype;
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
 export let buffer: BufferWithArrays | null = null;
@@ -65,7 +64,7 @@ export function initSourceText(): void {
     programPos = uint32[DATA_POINTER_POS_32];
   sourceStartPos = uint32[(programPos + SOURCE_START_OFFSET) >> 2];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-  sourceText = textDecoder.decode(buffer.subarray(sourceStartPos, sourceStartPos + sourceByteLen));
+  sourceText = utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen);
 }
 
 /**

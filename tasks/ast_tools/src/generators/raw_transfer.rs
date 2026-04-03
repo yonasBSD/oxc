@@ -149,11 +149,8 @@ fn generate_deserializers(
         let parent = null;
         let getLoc;
 
-        const textDecoder = new TextDecoder('utf-8', {{ ignoreBOM: true }}),
-            decodeStr = textDecoder.decode.bind(textDecoder);
-
         const {{ fromCharCode }} = String,
-            {{ latin1Slice }} = Buffer.prototype;
+            {{ utf8Slice, latin1Slice }} = Buffer.prototype;
 
         const STRING_DECODE_CROSSOVER = 64;
 
@@ -984,8 +981,8 @@ static STR_DESERIALIZER_BODY: &str = "
     }
     /* END_IF */
 
-    // Use `TextDecoder` for strings longer than 64 bytes
-    if (len > STRING_DECODE_CROSSOVER) return decodeStr(uint8.subarray(pos, end));
+    // Use `utf8Slice` for strings longer than 64 bytes
+    if (len > STRING_DECODE_CROSSOVER) return utf8Slice.call(uint8, pos, end);
 
     // If string is in source region, use slice of `sourceTextLatin` if all ASCII
     /* IF !LINTER */
@@ -993,9 +990,9 @@ static STR_DESERIALIZER_BODY: &str = "
     /* END_IF */
 
     if (isInSourceRegion) {
-        // Check if all bytes are ASCII, use `TextDecoder` if not
+        // Check if all bytes are ASCII, use `utf8Slice` if not
         for (let i = pos; i < end; i++) {
-            if (uint8[i] >= 128) return decodeStr(uint8.subarray(pos, end));
+            if (uint8[i] >= 128) return utf8Slice.call(uint8, pos, end);
         }
 
         // String is all ASCII, so slice from `sourceTextLatin`
@@ -1004,11 +1001,11 @@ static STR_DESERIALIZER_BODY: &str = "
 
     // String is not in source region - use `fromCharCode.apply` with a temp array of correct length.
     // Copy bytes into temp array.
-    // If any byte is non-ASCII, use `TextDecoder`.
+    // If any byte is non-ASCII, use `utf8Slice`.
     const arr = stringDecodeArrays[len];
     for (let i = 0; i < len; i++) {
         const b = uint8[pos + i];
-        if (b >= 128) return decodeStr(uint8.subarray(pos, end));
+        if (b >= 128) return utf8Slice.call(uint8, pos, end);
         arr[i] = b;
     }
 
