@@ -508,6 +508,7 @@ pub(crate) mod unicorn {
     pub mod no_useless_collection_argument;
     pub mod no_useless_error_capture_stack_trace;
     pub mod no_useless_fallback_in_spread;
+    pub mod no_useless_iterator_to_array;
     pub mod no_useless_length_check;
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_spread;

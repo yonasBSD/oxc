@@ -611,6 +611,7 @@ pub use crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife as UnicornNo
 pub use crate::rules::unicorn::no_useless_collection_argument::NoUselessCollectionArgument as UnicornNoUselessCollectionArgument;
 pub use crate::rules::unicorn::no_useless_error_capture_stack_trace::NoUselessErrorCaptureStackTrace as UnicornNoUselessErrorCaptureStackTrace;
 pub use crate::rules::unicorn::no_useless_fallback_in_spread::NoUselessFallbackInSpread as UnicornNoUselessFallbackInSpread;
+pub use crate::rules::unicorn::no_useless_iterator_to_array::NoUselessIteratorToArray as UnicornNoUselessIteratorToArray;
 pub use crate::rules::unicorn::no_useless_length_check::NoUselessLengthCheck as UnicornNoUselessLengthCheck;
 pub use crate::rules::unicorn::no_useless_promise_resolve_reject::NoUselessPromiseResolveReject as UnicornNoUselessPromiseResolveReject;
 pub use crate::rules::unicorn::no_useless_spread::NoUselessSpread as UnicornNoUselessSpread;
@@ -1216,6 +1217,7 @@ pub enum RuleEnum {
     UnicornNoUselessCollectionArgument(UnicornNoUselessCollectionArgument),
     UnicornNoUselessErrorCaptureStackTrace(UnicornNoUselessErrorCaptureStackTrace),
     UnicornNoUselessFallbackInSpread(UnicornNoUselessFallbackInSpread),
+    UnicornNoUselessIteratorToArray(UnicornNoUselessIteratorToArray),
     UnicornNoUselessLengthCheck(UnicornNoUselessLengthCheck),
     UnicornNoUselessPromiseResolveReject(UnicornNoUselessPromiseResolveReject),
     UnicornNoUselessSpread(UnicornNoUselessSpread),
@@ -1993,7 +1995,9 @@ const UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID: usize =
     UNICORN_NO_USELESS_COLLECTION_ARGUMENT_ID + 1usize;
 const UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID: usize =
     UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID + 1usize;
-const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID + 1usize;
+const UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID: usize =
+    UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID + 1usize;
+const UNICORN_NO_USELESS_LENGTH_CHECK_ID: usize = UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID + 1usize;
 const UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID: usize =
     UNICORN_NO_USELESS_LENGTH_CHECK_ID + 1usize;
 const UNICORN_NO_USELESS_SPREAD_ID: usize = UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID + 1usize;
@@ -2822,6 +2826,7 @@ impl RuleEnum {
                 UNICORN_NO_USELESS_ERROR_CAPTURE_STACK_TRACE_ID
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UNICORN_NO_USELESS_FALLBACK_IN_SPREAD_ID,
+            Self::UnicornNoUselessIteratorToArray(_) => UNICORN_NO_USELESS_ITERATOR_TO_ARRAY_ID,
             Self::UnicornNoUselessLengthCheck(_) => UNICORN_NO_USELESS_LENGTH_CHECK_ID,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UNICORN_NO_USELESS_PROMISE_RESOLVE_REJECT_ID
@@ -3638,6 +3643,7 @@ impl RuleEnum {
                 UnicornNoUselessErrorCaptureStackTrace::NAME
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::NAME,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::NAME,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::NAME,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::NAME
@@ -4484,6 +4490,7 @@ impl RuleEnum {
                 UnicornNoUselessErrorCaptureStackTrace::CATEGORY
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::CATEGORY,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::CATEGORY,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::CATEGORY,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::CATEGORY
@@ -5315,6 +5322,7 @@ impl RuleEnum {
                 UnicornNoUselessErrorCaptureStackTrace::FIX
             }
             Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::FIX,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::FIX,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::FIX,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::FIX
@@ -6259,6 +6267,9 @@ impl RuleEnum {
             }
             Self::UnicornNoUselessFallbackInSpread(_) => {
                 UnicornNoUselessFallbackInSpread::documentation()
+            }
+            Self::UnicornNoUselessIteratorToArray(_) => {
+                UnicornNoUselessIteratorToArray::documentation()
             }
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::documentation(),
             Self::UnicornNoUselessPromiseResolveReject(_) => {
@@ -7965,6 +7976,10 @@ impl RuleEnum {
                 UnicornNoUselessFallbackInSpread::config_schema(generator)
                     .or_else(|| UnicornNoUselessFallbackInSpread::schema(generator))
             }
+            Self::UnicornNoUselessIteratorToArray(_) => {
+                UnicornNoUselessIteratorToArray::config_schema(generator)
+                    .or_else(|| UnicornNoUselessIteratorToArray::schema(generator))
+            }
             Self::UnicornNoUselessLengthCheck(_) => {
                 UnicornNoUselessLengthCheck::config_schema(generator)
                     .or_else(|| UnicornNoUselessLengthCheck::schema(generator))
@@ -9105,6 +9120,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(_) => "unicorn",
             Self::UnicornNoUselessErrorCaptureStackTrace(_) => "unicorn",
             Self::UnicornNoUselessFallbackInSpread(_) => "unicorn",
+            Self::UnicornNoUselessIteratorToArray(_) => "unicorn",
             Self::UnicornNoUselessLengthCheck(_) => "unicorn",
             Self::UnicornNoUselessPromiseResolveReject(_) => "unicorn",
             Self::UnicornNoUselessSpread(_) => "unicorn",
@@ -10910,6 +10926,9 @@ impl RuleEnum {
                     UnicornNoUselessFallbackInSpread::from_configuration(value)?,
                 ))
             }
+            Self::UnicornNoUselessIteratorToArray(_) => Ok(Self::UnicornNoUselessIteratorToArray(
+                UnicornNoUselessIteratorToArray::from_configuration(value)?,
+            )),
             Self::UnicornNoUselessLengthCheck(_) => Ok(Self::UnicornNoUselessLengthCheck(
                 UnicornNoUselessLengthCheck::from_configuration(value)?,
             )),
@@ -12116,6 +12135,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.to_configuration(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.to_configuration(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.to_configuration(),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.to_configuration(),
             Self::UnicornNoUselessLengthCheck(rule) => rule.to_configuration(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.to_configuration(),
             Self::UnicornNoUselessSpread(rule) => rule.to_configuration(),
@@ -12834,6 +12854,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run(node, ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run(node, ctx),
             Self::UnicornNoUselessSpread(rule) => rule.run(node, ctx),
@@ -13550,6 +13571,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_once(ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run_once(ctx),
             Self::UnicornNoUselessSpread(rule) => rule.run_once(ctx),
@@ -14350,6 +14372,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -15082,6 +15105,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.should_run(ctx),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessLengthCheck(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.should_run(ctx),
             Self::UnicornNoUselessSpread(rule) => rule.should_run(ctx),
@@ -16009,6 +16033,9 @@ impl RuleEnum {
             }
             Self::UnicornNoUselessFallbackInSpread(_) => {
                 UnicornNoUselessFallbackInSpread::IS_TSGOLINT_RULE
+            }
+            Self::UnicornNoUselessIteratorToArray(_) => {
+                UnicornNoUselessIteratorToArray::IS_TSGOLINT_RULE
             }
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::IS_TSGOLINT_RULE,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
@@ -16959,6 +16986,7 @@ impl RuleEnum {
             Self::UnicornNoUselessFallbackInSpread(_) => {
                 UnicornNoUselessFallbackInSpread::HAS_CONFIG
             }
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::HAS_CONFIG,
             Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::HAS_CONFIG,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
                 UnicornNoUselessPromiseResolveReject::HAS_CONFIG
@@ -17713,6 +17741,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.types_info(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.types_info(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.types_info(),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.types_info(),
             Self::UnicornNoUselessLengthCheck(rule) => rule.types_info(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.types_info(),
             Self::UnicornNoUselessSpread(rule) => rule.types_info(),
@@ -18429,6 +18458,7 @@ impl RuleEnum {
             Self::UnicornNoUselessCollectionArgument(rule) => rule.run_info(),
             Self::UnicornNoUselessErrorCaptureStackTrace(rule) => rule.run_info(),
             Self::UnicornNoUselessFallbackInSpread(rule) => rule.run_info(),
+            Self::UnicornNoUselessIteratorToArray(rule) => rule.run_info(),
             Self::UnicornNoUselessLengthCheck(rule) => rule.run_info(),
             Self::UnicornNoUselessPromiseResolveReject(rule) => rule.run_info(),
             Self::UnicornNoUselessSpread(rule) => rule.run_info(),
@@ -19247,6 +19277,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornNoUselessErrorCaptureStackTrace::default(),
         ),
         RuleEnum::UnicornNoUselessFallbackInSpread(UnicornNoUselessFallbackInSpread::default()),
+        RuleEnum::UnicornNoUselessIteratorToArray(UnicornNoUselessIteratorToArray::default()),
         RuleEnum::UnicornNoUselessLengthCheck(UnicornNoUselessLengthCheck::default()),
         RuleEnum::UnicornNoUselessPromiseResolveReject(
             UnicornNoUselessPromiseResolveReject::default(),
