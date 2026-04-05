@@ -393,6 +393,7 @@ pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveD
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
+pub use crate::rules::react::hook_use_state::HookUseState as ReactHookUseState;
 pub use crate::rules::react::iframe_missing_sandbox::IframeMissingSandbox as ReactIframeMissingSandbox;
 pub use crate::rules::react::jsx_boolean_value::JsxBooleanValue as ReactJsxBooleanValue;
 pub use crate::rules::react::jsx_curly_brace_presence::JsxCurlyBracePresence as ReactJsxCurlyBracePresence;
@@ -1107,6 +1108,7 @@ pub enum RuleEnum {
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
+    ReactHookUseState(ReactHookUseState),
     ReactIframeMissingSandbox(ReactIframeMissingSandbox),
     ReactJsxBooleanValue(ReactJsxBooleanValue),
     ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence),
@@ -1868,7 +1870,8 @@ const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
 const REACT_FORBID_DOM_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
-const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
+const REACT_HOOK_USE_STATE_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
+const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_HOOK_USE_STATE_ID + 1usize;
 const REACT_JSX_BOOLEAN_VALUE_ID: usize = REACT_IFRAME_MISSING_SANDBOX_ID + 1usize;
 const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = REACT_JSX_BOOLEAN_VALUE_ID + 1usize;
 const REACT_JSX_FILENAME_EXTENSION_ID: usize = REACT_JSX_CURLY_BRACE_PRESENCE_ID + 1usize;
@@ -2696,6 +2699,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
+            Self::ReactHookUseState(_) => REACT_HOOK_USE_STATE_ID,
             Self::ReactIframeMissingSandbox(_) => REACT_IFRAME_MISSING_SANDBOX_ID,
             Self::ReactJsxBooleanValue(_) => REACT_JSX_BOOLEAN_VALUE_ID,
             Self::ReactJsxCurlyBracePresence(_) => REACT_JSX_CURLY_BRACE_PRESENCE_ID,
@@ -3519,6 +3523,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::NAME,
             Self::ReactForbidElements(_) => ReactForbidElements::NAME,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::NAME,
+            Self::ReactHookUseState(_) => ReactHookUseState::NAME,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::NAME,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::NAME,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::NAME,
@@ -4356,6 +4361,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
+            Self::ReactHookUseState(_) => ReactHookUseState::CATEGORY,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::CATEGORY,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::CATEGORY,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::CATEGORY,
@@ -5198,6 +5204,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
+            Self::ReactHookUseState(_) => ReactHookUseState::FIX,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::FIX,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::FIX,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::FIX,
@@ -6110,6 +6117,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::documentation(),
+            Self::ReactHookUseState(_) => ReactHookUseState::documentation(),
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::documentation(),
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::documentation(),
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::documentation(),
@@ -7658,6 +7666,8 @@ impl RuleEnum {
                 .or_else(|| ReactForbidElements::schema(generator)),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::config_schema(generator)
                 .or_else(|| ReactForwardRefUsesRef::schema(generator)),
+            Self::ReactHookUseState(_) => ReactHookUseState::config_schema(generator)
+                .or_else(|| ReactHookUseState::schema(generator)),
             Self::ReactIframeMissingSandbox(_) => {
                 ReactIframeMissingSandbox::config_schema(generator)
                     .or_else(|| ReactIframeMissingSandbox::schema(generator))
@@ -9010,6 +9020,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
+            Self::ReactHookUseState(_) => "react",
             Self::ReactIframeMissingSandbox(_) => "react",
             Self::ReactJsxBooleanValue(_) => "react",
             Self::ReactJsxCurlyBracePresence(_) => "react",
@@ -10566,6 +10577,9 @@ impl RuleEnum {
             Self::ReactForwardRefUsesRef(_) => {
                 Ok(Self::ReactForwardRefUsesRef(ReactForwardRefUsesRef::from_configuration(value)?))
             }
+            Self::ReactHookUseState(_) => {
+                Ok(Self::ReactHookUseState(ReactHookUseState::from_configuration(value)?))
+            }
             Self::ReactIframeMissingSandbox(_) => Ok(Self::ReactIframeMissingSandbox(
                 ReactIframeMissingSandbox::from_configuration(value)?,
             )),
@@ -12025,6 +12039,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.to_configuration(),
             Self::ReactForbidElements(rule) => rule.to_configuration(),
             Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
+            Self::ReactHookUseState(rule) => rule.to_configuration(),
             Self::ReactIframeMissingSandbox(rule) => rule.to_configuration(),
             Self::ReactJsxBooleanValue(rule) => rule.to_configuration(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.to_configuration(),
@@ -12744,6 +12759,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
+            Self::ReactHookUseState(rule) => rule.run(node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run(node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run(node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run(node, ctx),
@@ -13461,6 +13477,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
+            Self::ReactHookUseState(rule) => rule.run_once(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_once(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_once(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_once(ctx),
@@ -14248,6 +14265,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactHookUseState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14995,6 +15013,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
+            Self::ReactHookUseState(rule) => rule.should_run(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.should_run(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.should_run(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.should_run(ctx),
@@ -15876,6 +15895,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::IS_TSGOLINT_RULE,
+            Self::ReactHookUseState(_) => ReactHookUseState::IS_TSGOLINT_RULE,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::IS_TSGOLINT_RULE,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::IS_TSGOLINT_RULE,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::IS_TSGOLINT_RULE,
@@ -16844,6 +16864,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::HAS_CONFIG,
+            Self::ReactHookUseState(_) => ReactHookUseState::HAS_CONFIG,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::HAS_CONFIG,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::HAS_CONFIG,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::HAS_CONFIG,
@@ -17631,6 +17652,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
+            Self::ReactHookUseState(rule) => rule.types_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.types_info(),
             Self::ReactJsxBooleanValue(rule) => rule.types_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.types_info(),
@@ -18348,6 +18370,7 @@ impl RuleEnum {
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
+            Self::ReactHookUseState(rule) => rule.run_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.run_info(),
             Self::ReactJsxBooleanValue(rule) => rule.run_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_info(),
@@ -19153,6 +19176,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
+        RuleEnum::ReactHookUseState(ReactHookUseState::default()),
         RuleEnum::ReactIframeMissingSandbox(ReactIframeMissingSandbox::default()),
         RuleEnum::ReactJsxBooleanValue(ReactJsxBooleanValue::default()),
         RuleEnum::ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence::default()),

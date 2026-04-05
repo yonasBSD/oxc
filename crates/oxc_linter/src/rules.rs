@@ -392,6 +392,7 @@ pub(crate) mod react {
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
+    pub mod hook_use_state;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
