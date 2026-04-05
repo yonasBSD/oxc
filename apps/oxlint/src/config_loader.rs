@@ -16,6 +16,8 @@ use crate::{
     DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME, VITE_CONFIG_NAME,
 };
 
+const NODE_MODULES_DIR: &str = "node_modules";
+
 #[cfg(feature = "napi")]
 use crate::js_config;
 use crate::js_config::JsConfigResult;
@@ -162,6 +164,12 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
+                // Skip node_modules directories entirely - they are not part of the project
+                if entry.file_type().is_some_and(|ft| ft.is_dir())
+                    && entry.file_name() == NODE_MODULES_DIR
+                {
+                    return ignore::WalkState::Skip;
+                }
                 if let Some(config) = to_discovered_config(&entry, &self.base_config_path) {
                     self.configs.push(config);
                 }
@@ -1311,5 +1319,40 @@ mod test {
 
         let result = loader.load_root_config(root_dir.path(), None);
         assert!(result.is_err(), "Expected an error when both JSONC and TS configs exist");
+    }
+
+    #[test]
+    fn test_discover_configs_skips_node_modules() {
+        use super::discover_configs_in_tree;
+
+        let root_dir = tempfile::tempdir().unwrap();
+        // Create a valid root config
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        std::fs::write(&base_config, r#"{ "rules": {} }"#).unwrap();
+
+        // Create a nested node_modules directory with a config file inside
+        let node_modules = root_dir.path().join("node_modules").join("some-pkg");
+        std::fs::create_dir_all(&node_modules).unwrap();
+        std::fs::write(node_modules.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        // Create a legitimate nested config (not in node_modules)
+        let nested_dir = root_dir.path().join("packages").join("foo");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(nested_dir.join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+
+        let discovered: Vec<_> =
+            discover_configs_in_tree(root_dir.path(), &base_config).into_iter().collect();
+
+        // Should find the nested config but NOT the one inside node_modules
+        assert_eq!(discovered.len(), 1, "Expected only 1 config (not the node_modules one)");
+        let path = match &discovered[0] {
+            DiscoveredConfig::Json(p) => p.clone(),
+            _ => panic!("Expected Json config"),
+        };
+        assert!(
+            path.starts_with(nested_dir),
+            "Expected config in packages/foo, got: {}",
+            path.display()
+        );
     }
 }
