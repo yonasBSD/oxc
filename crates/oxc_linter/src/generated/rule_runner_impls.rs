@@ -894,6 +894,15 @@ impl RuleRunner for crate::rules::eslint::no_regex_spaces::NoRegexSpaces {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::no_restricted_exports::NoRestrictedExports {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ExportAllDeclaration,
+        AstType::ExportDefaultDeclaration,
+        AstType::ExportNamedDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::eslint::no_restricted_globals::NoRestrictedGlobals {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::IdentifierReference]));
