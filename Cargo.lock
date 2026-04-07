@@ -632,9 +632,9 @@ checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
 name = "editorconfig-parser"
-version = "0.0.3"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e6e29ee299de275dfcc1f52a23cff9fc668cb29edd148960254c14972f7a2bc"
+checksum = "e587c7336689e4dbb79157eb50ca5de9b3f75a48b85f17c1297d9c31e9d3bbc3"
 dependencies = [
  "globset",
 ]
