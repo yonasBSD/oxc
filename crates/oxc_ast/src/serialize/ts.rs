@@ -52,8 +52,8 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
 #[ast_meta]
 #[estree(raw_deser = "
     const kind = DESER[TSModuleDeclarationKind](POS_OFFSET.kind),
-        start = DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end),
+        start = DESER[i32](POS_OFFSET.span.start),
+        end = DESER[i32](POS_OFFSET.span.end),
         declare = DESER[bool](POS_OFFSET.declare);
 
     let node;
@@ -266,8 +266,8 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
                 optional: false,
                 typeAnnotation: null,
             }),
-            start: keywordStart = DESER[u32](POS_OFFSET.global_span.start),
-            end: keywordEnd = DESER[u32](POS_OFFSET.global_span.end),
+            start: keywordStart = DESER[i32](POS_OFFSET.global_span.start),
+            end: keywordEnd = DESER[i32](POS_OFFSET.global_span.end),
             ...(RANGE && { range: [keywordStart, keywordEnd] }),
             ...(PARENT && { parent }),
         };
@@ -488,8 +488,8 @@ impl ESTree for TSFunctionTypeParams<'_, '_> {
         node = parent = {
             type: 'TSParenthesizedType',
             typeAnnotation: null,
-            start: start = DESER[u32]( POS_OFFSET.span.start ),
-            end: end = DESER[u32]( POS_OFFSET.span.end ),
+            start: start = DESER[i32]( POS_OFFSET.span.start ),
+            end: end = DESER[i32]( POS_OFFSET.span.end ),
             ...(RANGE && { range: [start, end] }),
             ...(PARENT && { parent }),
         };

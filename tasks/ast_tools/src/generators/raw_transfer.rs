@@ -929,6 +929,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         "u8" => "return uint8[pos];",
         // "u16" => "return uint16[pos >> 1];",
         "u32" => "return uint32[pos >> 2];",
+        "i32" => "return int32[pos >> 2];",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u64" => "

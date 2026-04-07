@@ -121,8 +121,8 @@ impl Program<'_> {
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
-    const start = IS_TS ? 0 : DESER[u32](POS_OFFSET.span.start),
-        end = DESER[u32](POS_OFFSET.span.end);
+    const start = IS_TS ? 0 : DESER[i32](POS_OFFSET.span.start),
+        end = DESER[i32](POS_OFFSET.span.end);
 
     const program = parent = {
         type: 'Program',
