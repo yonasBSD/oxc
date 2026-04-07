@@ -421,11 +421,17 @@ fn generate_struct(
 
     let body = struct_def.estree.via.as_deref().and_then(|converter_name| {
         let converter = schema.meta_by_name(converter_name);
-        generator.apply_converter(converter, struct_def, 0).map(|value| {
-            if generator.preamble.is_empty() {
+        generator.apply_converter(converter, struct_def, 0).map(|(value, _)| {
+            let preamble = if generator.inline_preamble.is_empty() {
+                generator.assignments_preamble.as_slice()
+            } else {
+                generator.inline_preamble.as_slice()
+            };
+
+            if preamble.is_empty() {
                 format!("return {value};")
             } else {
-                let preamble = generator.preamble.join("");
+                let preamble = preamble.join("");
                 format!(
                     "
                         {preamble}
@@ -509,7 +515,11 @@ fn generate_struct(
             }
         }
 
-        for preamble_part in generator.preamble {
+        for preamble_part in generator.inline_preamble {
+            inline_preamble_str.push_str(preamble_part.trim());
+        }
+
+        for preamble_part in generator.assignments_preamble {
             assignments_preamble_str.push_str(preamble_part.trim());
         }
 
@@ -551,8 +561,10 @@ struct StructDeserializerGenerator<'s> {
     /// Fields that should use inline assignment pattern: `let x; return { x: x = value };`
     /// This allows minifiers to eliminate unused variables when RANGE is false.
     inline_assignment_field_names: FxHashSet<String>,
-    /// Preamble
-    preamble: Vec<String>,
+    /// Preamble before object definition
+    inline_preamble: Vec<String>,
+    /// Preamble before assignments
+    assignments_preamble: Vec<String>,
     /// Fields, keyed by fields name (field name in ESTree AST)
     fields: FxIndexMap<String, StructFieldValue>,
     /// `TypeId` for `Span`
@@ -575,7 +587,8 @@ impl<'s> StructDeserializerGenerator<'s> {
         Self {
             dependent_field_names: FxHashSet::default(),
             inline_assignment_field_names: FxHashSet::default(),
-            preamble: vec![],
+            inline_preamble: vec![],
+            assignments_preamble: vec![],
             fields: FxIndexMap::default(),
             span_type_id,
             schema,
@@ -699,24 +712,24 @@ impl<'s> StructDeserializerGenerator<'s> {
                     TypeDef::Vec(vec_def) => {
                         let field_fn = vec_def.deser_name(self.schema);
                         if index == 0 {
-                            self.preamble
+                            self.assignments_preamble
                                 .push(format!("const {field_name} = {field_fn}({field_pos});"));
                         } else {
-                            self.preamble
+                            self.assignments_preamble
                                 .push(format!("{field_name}.push(...{field_fn}({field_pos}));"));
                         }
                     }
                     TypeDef::Option(option_def) => {
                         let option_field_name = get_struct_field_name(field).to_string();
                         let field_fn = option_def.deser_name(self.schema);
-                        self.preamble
+                        self.assignments_preamble
                             .push(format!("const {option_field_name} = {field_fn}({field_pos});"));
                         if index == 0 {
-                            self.preamble.push(format!(
+                            self.assignments_preamble.push(format!(
                                 "const {field_name} = {option_field_name} === null ? [] : [{option_field_name}];"
                             ));
                         } else {
-                            self.preamble.push(format!(
+                            self.assignments_preamble.push(format!(
                                 "if ({option_field_name} !== null) {field_name}.push({option_field_name});"
                             ));
                         }
@@ -767,7 +780,10 @@ impl<'s> StructDeserializerGenerator<'s> {
             format!("{prefix}sourceText.slice(start, end)")
         } else if let Some(converter_name) = &field.estree.via {
             let converter = self.schema.meta_by_name(converter_name);
-            self.apply_converter(converter, struct_def, struct_offset).unwrap()
+            let (value, can_inline) =
+                self.apply_converter(converter, struct_def, struct_offset).unwrap();
+            inline = can_inline;
+            value
         } else {
             // Primitives and fieldless enums can be inlined into object literal,
             // because they don't have a `parent` field
@@ -801,9 +817,8 @@ impl<'s> StructDeserializerGenerator<'s> {
             deser_type = DeserializerType::TsOnly;
         }
 
-        let value = self.apply_converter(converter, struct_def, struct_offset).unwrap();
-        self.fields
-            .insert(field_name.to_string(), StructFieldValue { value, deser_type, inline: false });
+        let (value, inline) = self.apply_converter(converter, struct_def, struct_offset).unwrap();
+        self.fields.insert(field_name.to_string(), StructFieldValue { value, deser_type, inline });
     }
 
     fn apply_converter(
@@ -811,8 +826,9 @@ impl<'s> StructDeserializerGenerator<'s> {
         converter: &MetaType,
         struct_def: &StructDef,
         struct_offset: u32,
-    ) -> Option<String> {
+    ) -> Option<(String, bool)> {
         let raw_deser = converter.estree.raw_deser.as_deref()?;
+        let inline = converter.estree.raw_deser_inline;
 
         let value = THIS_REGEX.replace_all(raw_deser, ThisReplacer::new(self));
         let value = DESER_REGEX.replace_all(&value, DeserReplacer::new(self.schema));
@@ -822,12 +838,16 @@ impl<'s> StructDeserializerGenerator<'s> {
         let value = value.cow_replace("SOURCE_TEXT", "sourceText");
 
         let value = if let Some((preamble, value)) = value.trim().rsplit_once('\n') {
-            self.preamble.push(preamble.to_string());
+            if inline {
+                self.inline_preamble.push(preamble.to_string());
+            } else {
+                self.assignments_preamble.push(preamble.to_string());
+            }
             value.trim().to_string()
         } else {
             value.trim().to_string()
         };
-        Some(value)
+        Some((value, inline))
     }
 }
 
