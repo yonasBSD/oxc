@@ -1539,12 +1539,12 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const HAS_BOM_FLAG_POS = {has_bom_pos};
 
         /**
-         * Byte offset of the tokens offset within the buffer, divided by 4 (for `Uint32Array` indexing).
+         * Byte offset of the tokens offset within the buffer, divided by 4 (for `Int32Array` indexing).
          */
         export const TOKENS_OFFSET_POS_32 = {tokens_offset_pos_32};
 
         /**
-         * Byte offset of the tokens length within the buffer, divided by 4 (for `Uint32Array` indexing).
+         * Byte offset of the tokens length within the buffer, divided by 4 (for `Int32Array` indexing).
          */
         export const TOKENS_LEN_POS_32 = {tokens_len_pos_32};
 
