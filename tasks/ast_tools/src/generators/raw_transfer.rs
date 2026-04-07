@@ -144,7 +144,7 @@ fn generate_deserializers(
         import {{ getNodeLoc }} from '../plugins/location.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceTextLatin,
+        let uint8, uint32, int32, float64, sourceText, sourceTextLatin,
             sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
@@ -190,6 +190,7 @@ fn generate_deserializers(
         function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
+            int32 = buffer.int32;
             float64 = buffer.float64;
 
             sourceText = sourceTextInput;
@@ -232,7 +233,7 @@ fn generate_deserializers(
 
         export function resetBuffer() {{
             // Clear buffer and source text strings to allow them to be garbage collected
-            uint8 = uint32 = float64 = sourceText = sourceTextLatin = undefined;
+            uint8 = uint32 = int32 = float64 = sourceText = sourceTextLatin = undefined;
         }}
     ");
 
@@ -241,7 +242,11 @@ fn generate_deserializers(
     let code_type_definition_linter = "
         import type { Program } from './types.d.ts';
 
-        type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
+        type BufferWithArrays = Uint8Array & {
+            uint32: Uint32Array;
+            int32: Int32Array;
+            float64: Float64Array;
+        };
 
         export declare function deserializeProgramOnly(
             buffer: BufferWithArrays,
@@ -258,7 +263,11 @@ fn generate_deserializers(
     let code_type_definition_parser = "
         import type * as ESTree from '@oxc-project/types';
 
-        type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
+        type BufferWithArrays = Uint8Array & {
+            uint32: Uint32Array;
+            int32: Int32Array;
+            float64: Float64Array;
+        };
 
         export declare function deserialize(
             buffer: BufferWithArrays,
