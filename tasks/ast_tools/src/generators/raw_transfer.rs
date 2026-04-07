@@ -144,7 +144,7 @@ fn generate_deserializers(
         import {{ getNodeLoc }} from '../plugins/location.js';
         /* END_IF */
 
-        let uint8, uint32, int32, float64, sourceText, sourceTextLatin,
+        let uint8, int32, float64, sourceText, sourceTextLatin,
             sourceStartPos = 0, sourceEndPos = 0, firstNonAsciiPos = 0;
 
         let parent = null;
@@ -189,7 +189,6 @@ fn generate_deserializers(
 
         function deserializeWith(buffer, sourceTextInput, sourceByteLen, deserialize) {{
             uint8 = buffer;
-            uint32 = buffer.uint32;
             int32 = buffer.int32;
             float64 = buffer.float64;
 
@@ -233,7 +232,7 @@ fn generate_deserializers(
 
         export function resetBuffer() {{
             // Clear buffer and source text strings to allow them to be garbage collected
-            uint8 = uint32 = int32 = float64 = sourceText = sourceTextLatin = undefined;
+            uint8 = int32 = float64 = sourceText = sourceTextLatin = undefined;
         }}
     ");
 
@@ -243,7 +242,6 @@ fn generate_deserializers(
         import type { Program } from './types.d.ts';
 
         type BufferWithArrays = Uint8Array & {
-            uint32: Uint32Array;
             int32: Int32Array;
             float64: Float64Array;
         };
@@ -264,7 +262,6 @@ fn generate_deserializers(
         import type * as ESTree from '@oxc-project/types';
 
         type BufferWithArrays = Uint8Array & {
-            uint32: Uint32Array;
             int32: Int32Array;
             float64: Float64Array;
         };
@@ -928,23 +925,23 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         "bool" => "return uint8[pos] === 1;",
         "u8" => "return uint8[pos];",
         // "u16" => "return uint16[pos >> 1];",
-        "u32" => "return uint32[pos >> 2];",
+        "u32" => "return int32[pos >> 2] >>> 0;",
         "i32" => "return int32[pos >> 2];",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u64" => "
             const pos32 = pos >> 2;
-            return uint32[pos32]
-                + uint32[pos32 + 1] * /* 2^32 */ 4294967296;
+            return (int32[pos32] >>> 0)
+                + (int32[pos32 + 1] >>> 0) * /* 2^32 */ 4294967296;
         ",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u128" => "
             const pos32 = pos >> 2;
-            return uint32[pos32]
-                + uint32[pos32 + 1] * /* 2^32 */ 4294967296
-                + uint32[pos32 + 2] * /* 2^64 */ 18446744073709551616
-                + uint32[pos32 + 3] * /* 2^96 */ 79228162514264337593543950336;
+            return (int32[pos32] >>> 0)
+                + (int32[pos32 + 1] >>> 0) * /* 2^32 */ 4294967296
+                + (int32[pos32 + 2] >>> 0) * /* 2^64 */ 18446744073709551616
+                + (int32[pos32 + 3] >>> 0) * /* 2^96 */ 79228162514264337593543950336;
         ",
         "f64" => "return float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
