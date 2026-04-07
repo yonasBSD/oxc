@@ -2012,7 +2012,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
         // A.B = 1;
         // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
-        self.current_reference_flags -= ReferenceFlags::Write;
+        // For write-only references (simple `=` assignment), mark as MemberWriteTarget
+        // so the minifier can identify property-write-only references.
+        // Compound assignments (`+=`) and update expressions (`++`) have Read|Write flags,
+        // so `is_write_only()` is false and they correctly skip this branch.
+        if self.current_reference_flags.is_write_only() {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget;
+        } else {
+            self.current_reference_flags -= ReferenceFlags::Write;
+        }
 
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
@@ -2021,6 +2029,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
         }
+
+        // Clear any unconsumed flags to prevent leaking to sibling AST nodes.
+        // When the object is `this` or a call expression (not an IdentifierReference),
+        // the flags set above aren't consumed by `resolve_reference_usages`,
+        // and would incorrectly propagate to the next visited identifier (e.g., the RHS).
+        self.current_reference_flags = ReferenceFlags::empty();
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {
