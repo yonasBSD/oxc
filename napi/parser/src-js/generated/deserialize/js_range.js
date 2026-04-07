@@ -5087,7 +5087,7 @@ function deserializeVecComment(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeComment(pos));
     pos += 16;
@@ -5117,7 +5117,7 @@ function deserializeVecStatement(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeStatement(pos));
     pos += 16;
@@ -5305,7 +5305,7 @@ function deserializeVecObjectPropertyKind(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeObjectPropertyKind(pos));
     pos += 16;
@@ -5345,7 +5345,7 @@ function deserializeVecExpression(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeExpression(pos));
     pos += 16;
@@ -5383,7 +5383,7 @@ function deserializeVecArgument(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeArgument(pos));
     pos += 16;
@@ -5407,7 +5407,7 @@ function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeOptionAssignmentTargetMaybeDefault(pos));
     pos += 16;
@@ -5429,7 +5429,7 @@ function deserializeVecAssignmentTargetProperty(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeAssignmentTargetProperty(pos));
     pos += 16;
@@ -5667,7 +5667,7 @@ function deserializeVecOptionBindingPattern(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeOptionBindingPattern(pos));
     pos += 16;
@@ -5731,7 +5731,7 @@ function deserializeVecDecorator(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 32;
+  let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos; ) {
     arr.push(deserializeDecorator(pos));
     pos += 32;
@@ -5757,7 +5757,7 @@ function deserializeVecClassElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeClassElement(pos));
     pos += 16;
@@ -5817,7 +5817,7 @@ function deserializeVecImportDeclarationSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeImportDeclarationSpecifier(pos));
     pos += 16;
@@ -5873,7 +5873,7 @@ function deserializeVecExportSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 128;
+  let endPos = pos + (int32[pos32 + 2] << 7);
   for (; pos !== endPos; ) {
     arr.push(deserializeExportSpecifier(pos));
     pos += 128;
@@ -5905,7 +5905,7 @@ function deserializeVecJSXChild(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeJSXChild(pos));
     pos += 16;
@@ -5927,7 +5927,7 @@ function deserializeVecJSXAttributeItem(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeJSXAttributeItem(pos));
     pos += 16;
@@ -6135,7 +6135,7 @@ function deserializeVecTSType(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeTSType(pos));
     pos += 16;
@@ -6147,7 +6147,7 @@ function deserializeVecTSTupleElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeTSTupleElement(pos));
     pos += 16;
@@ -6203,7 +6203,7 @@ function deserializeVecTSSignature(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeTSSignature(pos));
     pos += 16;
@@ -6323,7 +6323,7 @@ function deserializeVecStaticExport(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 32;
+  let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos; ) {
     arr.push(deserializeStaticExport(pos));
     pos += 32;
@@ -6335,7 +6335,7 @@ function deserializeVecDynamicImport(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 16;
+  let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos; ) {
     arr.push(deserializeDynamicImport(pos));
     pos += 16;
@@ -6347,7 +6347,7 @@ function deserializeVecSpan(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 8;
+  let endPos = pos + (int32[pos32 + 2] << 3);
   for (; pos !== endPos; ) {
     arr.push(deserializeSpan(pos));
     pos += 8;

@@ -1127,13 +1127,20 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
     let len_pos32 = pos32_offset(VEC_LEN_FIELD_OFFSET);
 
+    // Use shift if possible (stride is a power of 2)
+    let end_pos_offset = if inner_type_size.is_power_of_two() {
+        format!("(int32[{len_pos32}] << {})", inner_type_size.trailing_zeros())
+    } else {
+        format!("int32[{len_pos32}] * {inner_type_size}")
+    };
+
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
             const arr = [],
                 pos32 = pos >> 2;
             pos = int32[{ptr_pos32}];
-            const endPos = pos + int32[{len_pos32}] * {inner_type_size};
+            const endPos = pos + {end_pos_offset};
             while (pos !== endPos) {{
                 arr.push({inner_fn_name}(pos));
                 pos += {inner_type_size};
