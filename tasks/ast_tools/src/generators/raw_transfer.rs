@@ -1077,7 +1077,7 @@ fn get_option_none_condition_and_offset(
             4 => format!("int32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
             8 => {
                 // TODO: Use `float64[pos >> 3] === 0` instead of
-                // `int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0`?
+                // `int32[pos >> 2] === 0 && int32[(pos >> 2) + 1] === 0`?
                 let value = niche.value();
                 format!(
                     "int32[{}] === {} && int32[{}] === {}",
@@ -1178,7 +1178,7 @@ where
 /// * If `offset == 0` and `shift == 0` -> `pos`.
 /// * If `offset == 0` -> `pos >> <shift>` (e.g. `pos >> 2`).
 /// * If `shift == 0` -> `pos + <offset>` (e.g. `pos + 8`).
-/// * Otherwise -> `(pos + <offset>) >> <shift>` (e.g. `(pos + 8) >> 2`).
+/// * Otherwise -> `(pos >> <shift>) + <offset shifted>` (e.g. `(pos >> 2) + 2`).
 pub(super) fn pos_offset_shift<O, S>(offset: O, shift: S) -> Cow<'static, str>
 where
     O: TryInto<u64>,
@@ -1192,7 +1192,10 @@ where
         (0, 0) => Cow::Borrowed("pos"),
         (0, _) => format_cow!("pos >> {shift}"),
         (_, 0) => format_cow!("pos + {offset}"),
-        (_, _) => format_cow!("(pos + {offset}) >> {shift}"),
+        (_, _) => {
+            let shifted_offset = offset >> shift;
+            format_cow!("(pos >> {shift}) + {shifted_offset}")
+        }
     }
 }
 
@@ -1293,8 +1296,9 @@ impl Replacer for PosReplacer {
     }
 }
 
-static POS_OFFSET_REGEX: Lazy<Regex> =
-    lazy_regex!(r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z_]+)*)(?:\s*\+\s*(\d+))?");
+static POS_OFFSET_REGEX: Lazy<Regex> = lazy_regex!(
+    r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z_]+)*)(?:\s*(\+|>>)\s*(\d+))?"
+);
 
 struct PosOffsetReplacer<'s, 'd> {
     schema: &'s Schema,
@@ -1314,7 +1318,7 @@ impl<'s, 'd> PosOffsetReplacer<'s, 'd> {
 
 impl Replacer for PosOffsetReplacer<'_, '_> {
     fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
-        assert_eq!(caps.len(), 4);
+        assert_eq!(caps.len(), 5);
 
         let struct_def = if let Some(struct_name) = caps.get(1) {
             self.schema.type_by_name(struct_name.as_str()).as_struct().unwrap()
@@ -1334,8 +1338,20 @@ impl Replacer for PosOffsetReplacer<'_, '_> {
             type_def = field.type_def(self.schema);
         }
 
-        if let Some(add) = caps.get(3) {
-            offset += str::parse::<u32>(add.as_str()).unwrap();
+        if let Some(operator) = caps.get(3) {
+            let right = str::parse::<u32>(caps.get(4).unwrap().as_str()).unwrap();
+
+            if operator.as_str() == ">>" {
+                if offset == 0 {
+                    write_it!(dst, "pos >> {right}");
+                } else {
+                    let offset_shifted = offset >> right;
+                    write_it!(dst, "(pos >> {right}) + {offset_shifted}");
+                }
+                return;
+            }
+
+            offset += right;
         }
 
         if offset == 0 {

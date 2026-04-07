@@ -4720,7 +4720,7 @@ function walkJSDocUnknownType(pos, ast, visitors) {
 }
 
 function walkOptionHashbang(pos, ast, visitors) {
-  if (!(ast.buffer.int32[(pos + 16) >> 2] === 0 && ast.buffer.int32[(pos + 20) >> 2] === 0))
+  if (!(ast.buffer.int32[(pos >> 2) + 4] === 0 && ast.buffer.int32[(pos >> 2) + 5] === 0))
     walkHashbang(pos, ast, visitors);
 }
 
@@ -4960,7 +4960,7 @@ function walkBoxTSTypeParameterInstantiation(pos, ast, visitors) {
 }
 
 function walkOptionBoxTSTypeParameterInstantiation(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxTSTypeParameterInstantiation(pos, ast, visitors);
 }
 
@@ -5153,7 +5153,7 @@ function walkBoxTSTypeAnnotation(pos, ast, visitors) {
 }
 
 function walkOptionBoxTSTypeAnnotation(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxTSTypeAnnotation(pos, ast, visitors);
 }
 
@@ -5166,7 +5166,7 @@ function walkOptionForStatementInit(pos, ast, visitors) {
 }
 
 function walkOptionLabelIdentifier(pos, ast, visitors) {
-  if (!(ast.buffer.int32[(pos + 16) >> 2] === 0 && ast.buffer.int32[(pos + 20) >> 2] === 0))
+  if (!(ast.buffer.int32[(pos >> 2) + 4] === 0 && ast.buffer.int32[(pos >> 2) + 5] === 0))
     walkLabelIdentifier(pos, ast, visitors);
 }
 
@@ -5186,12 +5186,12 @@ function walkBoxCatchClause(pos, ast, visitors) {
 }
 
 function walkOptionBoxCatchClause(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxCatchClause(pos, ast, visitors);
 }
 
 function walkOptionBoxBlockStatement(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxBlockStatement(pos, ast, visitors);
 }
 
@@ -5242,7 +5242,7 @@ function walkVecOptionBindingPattern(pos, ast, visitors) {
 }
 
 function walkOptionBindingIdentifier(pos, ast, visitors) {
-  if (!(ast.buffer.int32[(pos + 16) >> 2] === 0 && ast.buffer.int32[(pos + 20) >> 2] === 0))
+  if (!(ast.buffer.int32[(pos >> 2) + 4] === 0 && ast.buffer.int32[(pos >> 2) + 5] === 0))
     walkBindingIdentifier(pos, ast, visitors);
 }
 
@@ -5251,7 +5251,7 @@ function walkBoxTSTypeParameterDeclaration(pos, ast, visitors) {
 }
 
 function walkOptionBoxTSTypeParameterDeclaration(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxTSTypeParameterDeclaration(pos, ast, visitors);
 }
 
@@ -5264,7 +5264,7 @@ function walkBoxFunctionBody(pos, ast, visitors) {
 }
 
 function walkOptionBoxFunctionBody(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxFunctionBody(pos, ast, visitors);
 }
 
@@ -5295,7 +5295,7 @@ function walkBoxExpression(pos, ast, visitors) {
 }
 
 function walkOptionBoxExpression(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxExpression(pos, ast, visitors);
 }
 
@@ -5381,7 +5381,7 @@ function walkVecImportDeclarationSpecifier(pos, ast, visitors) {
 }
 
 function walkOptionVecImportDeclarationSpecifier(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkVecImportDeclarationSpecifier(pos, ast, visitors);
 }
 
@@ -5390,7 +5390,7 @@ function walkBoxWithClause(pos, ast, visitors) {
 }
 
 function walkOptionBoxWithClause(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxWithClause(pos, ast, visitors);
 }
 
@@ -5460,7 +5460,7 @@ function walkBoxJSXClosingElement(pos, ast, visitors) {
 }
 
 function walkOptionBoxJSXClosingElement(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxJSXClosingElement(pos, ast, visitors);
 }
 
@@ -5785,7 +5785,7 @@ function walkBoxTSTypeParameter(pos, ast, visitors) {
 }
 
 function walkOptionBoxObjectExpression(pos, ast, visitors) {
-  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos + 4) >> 2] === 0))
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
     walkBoxObjectExpression(pos, ast, visitors);
 }
 
