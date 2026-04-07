@@ -175,10 +175,10 @@ const IS_ESCAPED_FIELD_OFFSET = 10;
  * @returns {Object[]} - Array of token objects
  */
 function deserializeTokens(buffer, sourceText, isJs) {
-  const { uint32 } = buffer;
+  const { int32 } = buffer;
 
-  let pos = uint32[TOKENS_OFFSET_POS_32];
-  const len = uint32[TOKENS_LEN_POS_32];
+  let pos = int32[TOKENS_OFFSET_POS_32];
+  const len = int32[TOKENS_LEN_POS_32];
   const endPos = pos + len * TOKEN_SIZE;
 
   const tokens = [];
@@ -198,11 +198,11 @@ function deserializeTokens(buffer, sourceText, isJs) {
  * @returns {Object} - Token object
  */
 function deserializeToken(pos, buffer, sourceText, isJs) {
-  const { uint32 } = buffer;
+  const { int32 } = buffer;
 
   const pos32 = pos >> 2;
-  const start = uint32[pos32],
-    end = uint32[pos32 + 1];
+  const start = int32[pos32],
+    end = int32[pos32 + 1];
 
   let value = sourceText.slice(start, end);
 
