@@ -105,6 +105,9 @@ pub struct SemanticBuilder<'a> {
     stats: Option<Stats>,
     excess_capacity: f64,
 
+    /// Should enum member values be evaluated?
+    enum_eval: bool,
+
     /// Should additional syntax checks be performed?
     ///
     /// See: [`crate::checker::check`]
@@ -162,6 +165,7 @@ impl<'a> SemanticBuilder<'a> {
             jsdoc: JSDocBuilder::default(),
             stats: None,
             excess_capacity: 0.0,
+            enum_eval: false,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -183,6 +187,19 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    /// Enable or disable evaluation of TypeScript enum member values.
+    ///
+    /// When enabled, enum member values are computed during semantic analysis
+    /// and stored in [`Scoping`], allowing the transformer to inline const enum
+    /// member accesses.
+    ///
+    /// By default, this is `false`.
+    #[must_use]
+    pub fn with_enum_eval(mut self, yes: bool) -> Self {
+        self.enum_eval = yes;
         self
     }
 
@@ -2386,6 +2403,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
         self.visit_ts_enum_body(&decl.body);
+        // Evaluate enum member values after all members are bound
+        if self.enum_eval {
+            crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
+        }
         self.leave_node(kind);
     }
 
