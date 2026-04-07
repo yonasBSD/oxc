@@ -171,8 +171,8 @@ impl ESTree for CatchParameterConverter<'_, '_> {
     ts_type = "ParamPattern[]",
     raw_deser = "
         const params = DESER[Vec<FormalParameter>](POS_OFFSET.items);
-        if (uint32[(POS_OFFSET.rest) >> 2] !== 0 && uint32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
-            pos = uint32[(POS_OFFSET.rest) >> 2];
+        if (int32[(POS_OFFSET.rest) >> 2] !== 0 && int32[(POS_OFFSET.rest + 4) >> 2] !== 0) {
+            pos = int32[(POS_OFFSET.rest) >> 2];
 
             let start, end;
             const previousParent = parent;
@@ -255,7 +255,7 @@ impl ESTree for FormalParameterRest<'_> {
     raw_deser = "
         let param;
         const previousParent = parent;
-        const hasInitializer = uint32[(POS_OFFSET.initializer) >> 2] !== 0 && uint32[(POS_OFFSET.initializer + 4) >> 2] !== 0;
+        const hasInitializer = int32[(POS_OFFSET.initializer) >> 2] !== 0 && int32[(POS_OFFSET.initializer + 4) >> 2] !== 0;
 
         if (IS_TS) {
             const accessibility = DESER[Option<TSAccessibility>](POS_OFFSET.accessibility),

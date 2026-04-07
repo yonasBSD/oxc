@@ -189,7 +189,7 @@ for (const { filename, code } of fixtures) {
       token: TOKEN,
     };
 
-    const programPos = buffer.uint32[DATA_POINTER_POS_32] + PROGRAM_OFFSET;
+    const programPos = buffer.int32[DATA_POINTER_POS_32] + PROGRAM_OFFSET;
 
     benchRaw("parser_napi_raw_lazy_visit_only(debugger)", () => {
       ast.nodes = new Map();

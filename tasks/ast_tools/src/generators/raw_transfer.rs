@@ -226,7 +226,7 @@ fn generate_deserializers(
                 }}
             }}
 
-            const data = deserialize(uint32[{data_pointer_pos_32}]);
+            const data = deserialize(int32[{data_pointer_pos_32}]);
             resetBuffer();
             return data;
         }}
@@ -949,11 +949,11 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
 // In linter, source text is towards the end of the buffer, and all other strings are before it.
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
-        len = uint32[pos32 + 2];
+        len = int32[pos32 + 2];
 
     if (len === 0) return '';
 
-    pos = uint32[pos32];
+    pos = int32[pos32];
 
     const end = pos + len;
 
@@ -1056,13 +1056,13 @@ fn get_option_none_condition_and_offset(
         let none_condition = match niche.size {
             1 => format!("uint8[{}] === {}", pos_offset(niche_offset), niche.value()),
             // 2 => format!("uint16[{}] === {}", pos_offset_shift(offset, 1), niche.value()),
-            4 => format!("uint32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
+            4 => format!("int32[{}] === {}", pos_offset_shift(niche_offset, 2), niche.value()),
             8 => {
                 // TODO: Use `float64[pos >> 3] === 0` instead of
-                // `uint32[pos >> 2] === 0 && uint32[(pos + 4) >> 2] === 0`?
+                // `int32[pos >> 2] === 0 && int32[(pos + 4) >> 2] === 0`?
                 let value = niche.value();
                 format!(
-                    "uint32[{}] === {} && uint32[{}] === {}",
+                    "int32[{}] === {} && int32[{}] === {}",
                     pos_offset_shift(niche_offset, 2),
                     value & u128::from(u32::MAX),
                     pos_offset_shift(niche_offset + 4, 2),
@@ -1090,7 +1090,7 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
-            return {inner_fn_name}(uint32[pos >> 2]);
+            return {inner_fn_name}(int32[pos >> 2]);
         }}
     ");
 }
@@ -1114,8 +1114,8 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
         function {fn_name}(pos) {{
             const arr = [],
                 pos32 = pos >> 2;
-            pos = uint32[{ptr_pos32}];
-            const endPos = pos + uint32[{len_pos32}] * {inner_type_size};
+            pos = int32[{ptr_pos32}];
+            const endPos = pos + int32[{len_pos32}] * {inner_type_size};
             while (pos !== endPos) {{
                 arr.push({inner_fn_name}(pos));
                 pos += {inner_type_size};
@@ -1498,7 +1498,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const ACTIVE_SIZE = {active_size};
 
         /**
-         * Byte offset of the data pointer within the buffer, divided by 4 (for `Uint32Array` indexing).
+         * Byte offset of the data pointer within the buffer, divided by 4 (for `Int32Array` indexing).
          */
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
 
