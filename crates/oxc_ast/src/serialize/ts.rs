@@ -15,7 +15,7 @@ use super::Null;
 // TODO: Not ideal to have to include the enum discriminant's value here explicitly.
 // Need a "macro" e.g. `ENUM_MATCHES(id, ComputedString | ComputedTemplateString)`.
 #[ast_meta]
-#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1")]
+#[estree(ts_type = "boolean", raw_deser = "DESER[u8](POS_OFFSET.id) > 1", raw_deser_inline)]
 pub struct TSEnumMemberComputed<'a, 'b>(pub &'b TSEnumMember<'a>);
 
 impl ESTree for TSEnumMemberComputed<'_, '_> {
@@ -32,7 +32,7 @@ impl ESTree for TSEnumMemberComputed<'_, '_> {
 ///
 /// This field is always `null`, and only appears in the TS-ESTree AST, not JS ESTree.
 #[ast_meta]
-#[estree(ts_type = "string | null", raw_deser = "null")]
+#[estree(ts_type = "string | null", raw_deser = "null", raw_deser_inline)]
 #[ts]
 pub struct ExpressionStatementDirective<'a, 'b>(
     #[expect(dead_code)] pub &'b ExpressionStatement<'a>,

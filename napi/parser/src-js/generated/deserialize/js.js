@@ -517,13 +517,12 @@ function deserializeComputedMemberExpression(pos) {
     object: null,
     property: null,
     optional: deserializeBool(pos + 12),
-    computed: null,
+    computed: true,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.object = deserializeExpression(pos + 16);
   node.property = deserializeExpression(pos + 32);
-  node.computed = true;
   return node;
 }
 
@@ -533,13 +532,12 @@ function deserializeStaticMemberExpression(pos) {
     object: null,
     property: null,
     optional: deserializeBool(pos + 12),
-    computed: null,
+    computed: false,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.object = deserializeExpression(pos + 16);
   node.property = deserializeIdentifierName(pos + 32);
-  node.computed = false;
   return node;
 }
 
@@ -549,13 +547,12 @@ function deserializePrivateFieldExpression(pos) {
     object: null,
     property: null,
     optional: deserializeBool(pos + 12),
-    computed: null,
+    computed: false,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.object = deserializeExpression(pos + 16);
   node.property = deserializePrivateIdentifier(pos + 32);
-  node.computed = false;
   return node;
 }
 
@@ -723,12 +720,11 @@ function deserializeUnaryExpression(pos) {
     type: "UnaryExpression",
     operator: deserializeUnaryOperator(pos + 12),
     argument: null,
-    prefix: null,
+    prefix: true,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.argument = deserializeExpression(pos + 16);
-  node.prefix = true;
   return node;
 }
 
@@ -750,13 +746,12 @@ function deserializePrivateInExpression(pos) {
   let node = {
     type: "BinaryExpression",
     left: null,
-    operator: null,
+    operator: "in",
     right: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.left = deserializePrivateIdentifier(pos + 16);
-  node.operator = "in";
   node.right = deserializeExpression(pos + 48);
   return node;
 }
@@ -951,12 +946,12 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     end = deserializeU32(pos + 4),
     node = {
       type: "Property",
-      kind: null,
+      kind: "init",
       key: null,
       value: null,
-      method: null,
-      shorthand: null,
-      computed: null,
+      method: false,
+      shorthand: true,
+      computed: false,
       start,
       end,
     },
@@ -976,32 +971,25 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
       start,
       end,
     });
-  node.kind = "init";
   node.key = key;
   node.value = value;
-  node.method = false;
-  node.shorthand = true;
-  node.computed = false;
   return node;
 }
 
 function deserializeAssignmentTargetPropertyProperty(pos) {
   let node = {
     type: "Property",
-    kind: null,
+    kind: "init",
     key: null,
     value: null,
-    method: null,
-    shorthand: null,
+    method: false,
+    shorthand: false,
     computed: deserializeBool(pos + 12),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
-  node.kind = "init";
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeAssignmentTargetMaybeDefault(pos + 32);
-  node.method = false;
-  node.shorthand = false;
   return node;
 }
 
@@ -1660,19 +1648,17 @@ function deserializeObjectPattern(pos) {
 function deserializeBindingProperty(pos) {
   let node = {
     type: "Property",
-    kind: null,
+    kind: "init",
     key: null,
     value: null,
-    method: null,
+    method: false,
     shorthand: deserializeBool(pos + 12),
     computed: deserializeBool(pos + 13),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
-  node.kind = "init";
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeBindingPattern(pos + 32);
-  node.method = false;
   return node;
 }
 
@@ -1709,7 +1695,7 @@ function deserializeFunction(pos) {
       async: deserializeBool(pos + 90),
       params: null,
       body: null,
-      expression: null,
+      expression: false,
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
     },
@@ -1717,7 +1703,6 @@ function deserializeFunction(pos) {
   node.id = deserializeOptionBindingIdentifier(pos + 16);
   node.params = params;
   node.body = deserializeOptionBoxFunctionBody(pos + 80);
-  node.expression = false;
   return node;
 }
 
@@ -1790,7 +1775,7 @@ function deserializeArrowFunctionExpression(pos) {
       params: null,
       body: null,
       id: null,
-      generator: null,
+      generator: false,
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
     },
@@ -1798,7 +1783,6 @@ function deserializeArrowFunctionExpression(pos) {
   expression === true && (body = body.body[0].expression);
   node.params = deserializeBoxFormalParameters(pos + 24);
   node.body = body;
-  node.generator = false;
   return node;
 }
 
@@ -2310,16 +2294,14 @@ function deserializeBooleanLiteral(pos) {
 
 function deserializeNullLiteral(pos) {
   let start = deserializeU32(pos),
-    end = deserializeU32(pos + 4),
-    node = {
-      type: "Literal",
-      value: null,
-      raw: null,
-      start,
-      end,
-    };
-  node.raw = start === 0 && end === 0 ? null : "null";
-  return node;
+    end = deserializeU32(pos + 4);
+  return {
+    type: "Literal",
+    value: null,
+    raw: start === 0 && end === 0 ? null : "null",
+    start,
+    end,
+  };
 }
 
 function deserializeNumericLiteral(pos) {
@@ -2360,21 +2342,18 @@ function deserializeStringLiteral(pos) {
 function deserializeBigIntLiteral(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
-    node = {
-      type: "Literal",
-      value: null,
-      raw:
-        int32[(pos + 32) >> 2] === 0 && int32[(pos + 36) >> 2] === 0
-          ? null
-          : sourceText.slice(start, end),
-      bigint: null,
-      start,
-      end,
-    },
     bigint = deserializeStr(pos + 16);
-  node.value = BigInt(bigint);
-  node.bigint = bigint;
-  return node;
+  return {
+    type: "Literal",
+    value: BigInt(bigint),
+    raw:
+      int32[(pos + 32) >> 2] === 0 && int32[(pos + 36) >> 2] === 0
+        ? null
+        : sourceText.slice(start, end),
+    bigint,
+    start,
+    end,
+  };
 }
 
 function deserializeRegExpLiteral(pos) {
@@ -2446,13 +2425,12 @@ function deserializeJSXOpeningElement(pos) {
     type: "JSXOpeningElement",
     name: null,
     attributes: null,
-    selfClosing: null,
+    selfClosing: false,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.name = deserializeJSXElementName(pos + 16);
   node.attributes = deserializeVecJSXAttributeItem(pos + 40);
-  node.selfClosing = false;
   return node;
 }
 
@@ -2483,16 +2461,13 @@ function deserializeJSXFragment(pos) {
 }
 
 function deserializeJSXOpeningFragment(pos) {
-  let node = {
+  return {
     type: "JSXOpeningFragment",
-    attributes: null,
-    selfClosing: null,
+    attributes: [],
+    selfClosing: false,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
-  node.attributes = [];
-  node.selfClosing = false;
-  return node;
 }
 
 function deserializeJSXClosingFragment(pos) {
@@ -2813,16 +2788,13 @@ function deserializeJSXText(pos) {
 function deserializeTSThisParameter(pos) {
   let node = {
     type: "Identifier",
-    decorators: null,
-    name: null,
-    optional: null,
+    decorators: [],
+    name: "this",
+    optional: false,
     typeAnnotation: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
-  node.decorators = [];
-  node.name = "this";
-  node.optional = false;
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
   return node;
 }
@@ -2858,13 +2830,12 @@ function deserializeTSEnumMember(pos) {
     type: "TSEnumMember",
     id: null,
     initializer: null,
-    computed: null,
+    computed: deserializeU8(pos + 16) > 1,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.id = deserializeTSEnumMemberName(pos + 16);
   node.initializer = deserializeOptionExpression(pos + 32);
-  node.computed = deserializeU8(pos + 16) > 1;
   return node;
 }
 
@@ -3482,13 +3453,12 @@ function deserializeTSPropertySignature(pos) {
     key: null,
     typeAnnotation: null,
     accessibility: null,
-    static: null,
+    static: false,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
   node.key = deserializePropertyKey(pos + 16);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
-  node.static = false;
   return node;
 }
 
@@ -3567,8 +3537,8 @@ function deserializeTSMethodSignature(pos) {
       params: null,
       returnType: null,
       accessibility: null,
-      readonly: null,
-      static: null,
+      readonly: false,
+      static: false,
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
     },
@@ -3579,8 +3549,6 @@ function deserializeTSMethodSignature(pos) {
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 32);
   node.params = params;
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 56);
-  node.readonly = false;
-  node.static = false;
   return node;
 }
 
@@ -3602,15 +3570,13 @@ function deserializeTSConstructSignatureDeclaration(pos) {
 function deserializeTSIndexSignatureName(pos) {
   let node = {
     type: "Identifier",
-    decorators: null,
+    decorators: [],
     name: deserializeStr(pos + 16),
-    optional: null,
+    optional: false,
     typeAnnotation: null,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
-  node.decorators = [];
-  node.optional = false;
   node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 32);
   return node;
 }
@@ -3760,9 +3726,9 @@ function deserializeTSGlobalDeclaration(pos) {
     type: "TSModuleDeclaration",
     id: null,
     body: null,
-    kind: null,
+    kind: "global",
     declare: deserializeBool(pos + 88),
-    global: null,
+    global: true,
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
@@ -3773,8 +3739,6 @@ function deserializeTSGlobalDeclaration(pos) {
     end: deserializeU32(pos + 20),
   };
   node.body = deserializeTSModuleBlock(pos + 24);
-  node.kind = "global";
-  node.global = true;
   return node;
 }
 

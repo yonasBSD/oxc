@@ -199,91 +199,67 @@ function deserializeExpression(pos) {
 }
 
 function deserializeIdentifierName(pos) {
-  let start,
-    end,
-    previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: null,
-      name: deserializeStr(pos + 16),
-      optional: null,
-      typeAnnotation: null,
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
-  node.decorators = [];
-  node.optional = false;
-  parent = previousParent;
-  return node;
+  let start, end;
+  return {
+    __proto__: NodeProto,
+    type: "Identifier",
+    decorators: [],
+    name: deserializeStr(pos + 16),
+    optional: false,
+    typeAnnotation: null,
+    start: (start = deserializeU32(pos)),
+    end: (end = deserializeU32(pos + 4)),
+    range: [start, end],
+    parent,
+  };
 }
 
 function deserializeIdentifierReference(pos) {
-  let start,
-    end,
-    previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: null,
-      name: deserializeStr(pos + 16),
-      optional: null,
-      typeAnnotation: null,
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
-  node.decorators = [];
-  node.optional = false;
-  parent = previousParent;
-  return node;
+  let start, end;
+  return {
+    __proto__: NodeProto,
+    type: "Identifier",
+    decorators: [],
+    name: deserializeStr(pos + 16),
+    optional: false,
+    typeAnnotation: null,
+    start: (start = deserializeU32(pos)),
+    end: (end = deserializeU32(pos + 4)),
+    range: [start, end],
+    parent,
+  };
 }
 
 function deserializeBindingIdentifier(pos) {
-  let start,
-    end,
-    previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: null,
-      name: deserializeStr(pos + 16),
-      optional: null,
-      typeAnnotation: null,
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
-  node.decorators = [];
-  node.optional = false;
-  parent = previousParent;
-  return node;
+  let start, end;
+  return {
+    __proto__: NodeProto,
+    type: "Identifier",
+    decorators: [],
+    name: deserializeStr(pos + 16),
+    optional: false,
+    typeAnnotation: null,
+    start: (start = deserializeU32(pos)),
+    end: (end = deserializeU32(pos + 4)),
+    range: [start, end],
+    parent,
+  };
 }
 
 function deserializeLabelIdentifier(pos) {
-  let start,
-    end,
-    previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Identifier",
-      decorators: null,
-      name: deserializeStr(pos + 16),
-      optional: null,
-      typeAnnotation: null,
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
-  node.decorators = [];
-  node.optional = false;
-  parent = previousParent;
-  return node;
+  let start, end;
+  return {
+    __proto__: NodeProto,
+    type: "Identifier",
+    decorators: [],
+    name: deserializeStr(pos + 16),
+    optional: false,
+    typeAnnotation: null,
+    start: (start = deserializeU32(pos)),
+    end: (end = deserializeU32(pos + 4)),
+    range: [start, end],
+    parent,
+  };
 }
 
 function deserializeThisExpression(pos) {
@@ -459,7 +435,7 @@ function deserializeObjectProperty(pos) {
       method: deserializeBool(pos + 13),
       shorthand: deserializeBool(pos + 14),
       computed: deserializeBool(pos + 15),
-      optional: null,
+      optional: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -467,7 +443,6 @@ function deserializeObjectProperty(pos) {
     });
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeExpression(pos + 32);
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -663,7 +638,7 @@ function deserializeComputedMemberExpression(pos) {
       object: null,
       property: null,
       optional: deserializeBool(pos + 12),
-      computed: null,
+      computed: true,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -671,7 +646,6 @@ function deserializeComputedMemberExpression(pos) {
     });
   node.object = deserializeExpression(pos + 16);
   node.property = deserializeExpression(pos + 32);
-  node.computed = true;
   parent = previousParent;
   return node;
 }
@@ -686,7 +660,7 @@ function deserializeStaticMemberExpression(pos) {
       object: null,
       property: null,
       optional: deserializeBool(pos + 12),
-      computed: null,
+      computed: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -694,7 +668,6 @@ function deserializeStaticMemberExpression(pos) {
     });
   node.object = deserializeExpression(pos + 16);
   node.property = deserializeIdentifierName(pos + 32);
-  node.computed = false;
   parent = previousParent;
   return node;
 }
@@ -709,7 +682,7 @@ function deserializePrivateFieldExpression(pos) {
       object: null,
       property: null,
       optional: deserializeBool(pos + 12),
-      computed: null,
+      computed: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -717,7 +690,6 @@ function deserializePrivateFieldExpression(pos) {
     });
   node.object = deserializeExpression(pos + 16);
   node.property = deserializePrivateIdentifier(pos + 32);
-  node.computed = false;
   parent = previousParent;
   return node;
 }
@@ -929,14 +901,13 @@ function deserializeUnaryExpression(pos) {
       type: "UnaryExpression",
       operator: deserializeUnaryOperator(pos + 12),
       argument: null,
-      prefix: null,
+      prefix: true,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
   node.argument = deserializeExpression(pos + 16);
-  node.prefix = true;
   parent = previousParent;
   return node;
 }
@@ -970,7 +941,7 @@ function deserializePrivateInExpression(pos) {
       __proto__: NodeProto,
       type: "BinaryExpression",
       left: null,
-      operator: null,
+      operator: "in",
       right: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
@@ -978,7 +949,6 @@ function deserializePrivateInExpression(pos) {
       parent,
     });
   node.left = deserializePrivateIdentifier(pos + 16);
-  node.operator = "in";
   node.right = deserializeExpression(pos + 48);
   parent = previousParent;
   return node;
@@ -1105,9 +1075,9 @@ function deserializeArrayAssignmentTarget(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "ArrayPattern",
-      decorators: null,
+      decorators: [],
       elements: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
@@ -1117,9 +1087,7 @@ function deserializeArrayAssignmentTarget(pos) {
     elements = deserializeVecOptionAssignmentTargetMaybeDefault(pos + 16),
     rest = deserializeOptionBoxAssignmentTargetRest(pos + 40);
   rest !== null && elements.push(rest);
-  node.decorators = [];
   node.elements = elements;
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -1131,9 +1099,9 @@ function deserializeObjectAssignmentTarget(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "ObjectPattern",
-      decorators: null,
+      decorators: [],
       properties: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
@@ -1143,9 +1111,7 @@ function deserializeObjectAssignmentTarget(pos) {
     properties = deserializeVecAssignmentTargetProperty(pos + 16),
     rest = deserializeOptionBoxAssignmentTargetRest(pos + 40);
   rest !== null && properties.push(rest);
-  node.decorators = [];
   node.properties = properties;
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -1157,9 +1123,9 @@ function deserializeAssignmentTargetRest(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "RestElement",
-      decorators: null,
+      decorators: [],
       argument: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       value: null,
       start: (start = deserializeU32(pos)),
@@ -1167,9 +1133,7 @@ function deserializeAssignmentTargetRest(pos) {
       range: [start, end],
       parent,
     });
-  node.decorators = [];
   node.argument = deserializeAssignmentTarget(pos + 16);
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -1210,20 +1174,18 @@ function deserializeAssignmentTargetWithDefault(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "AssignmentPattern",
-      decorators: null,
+      decorators: [],
       left: null,
       right: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
-  node.decorators = [];
   node.left = deserializeAssignmentTarget(pos + 16);
   node.right = deserializeExpression(pos + 32);
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -1246,13 +1208,13 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "Property",
-      kind: null,
+      kind: "init",
       key: null,
       value: null,
-      method: null,
-      shorthand: null,
-      computed: null,
-      optional: null,
+      method: false,
+      shorthand: true,
+      computed: false,
+      optional: false,
       start,
       end,
       range: [start, end],
@@ -1292,13 +1254,8 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     left.parent = value;
     init.parent = value;
   }
-  node.kind = "init";
   node.key = key;
   node.value = value;
-  node.method = false;
-  node.shorthand = true;
-  node.computed = false;
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -1310,24 +1267,20 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "Property",
-      kind: null,
+      kind: "init",
       key: null,
       value: null,
-      method: null,
-      shorthand: null,
+      method: false,
+      shorthand: false,
       computed: deserializeBool(pos + 12),
-      optional: null,
+      optional: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
-  node.kind = "init";
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeAssignmentTargetMaybeDefault(pos + 32);
-  node.method = false;
-  node.shorthand = false;
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -2155,20 +2108,18 @@ function deserializeAssignmentPattern(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "AssignmentPattern",
-      decorators: null,
+      decorators: [],
       left: null,
       right: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
-  node.decorators = [];
   node.left = deserializeBindingPattern(pos + 16);
   node.right = deserializeExpression(pos + 32);
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -2180,9 +2131,9 @@ function deserializeObjectPattern(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "ObjectPattern",
-      decorators: null,
+      decorators: [],
       properties: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
@@ -2192,9 +2143,7 @@ function deserializeObjectPattern(pos) {
     properties = deserializeVecBindingProperty(pos + 16),
     rest = deserializeOptionBoxBindingRestElement(pos + 40);
   rest !== null && properties.push(rest);
-  node.decorators = [];
   node.properties = properties;
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -2206,23 +2155,20 @@ function deserializeBindingProperty(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "Property",
-      kind: null,
+      kind: "init",
       key: null,
       value: null,
-      method: null,
+      method: false,
       shorthand: deserializeBool(pos + 12),
       computed: deserializeBool(pos + 13),
-      optional: null,
+      optional: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
-  node.kind = "init";
   node.key = deserializePropertyKey(pos + 16);
   node.value = deserializeBindingPattern(pos + 32);
-  node.method = false;
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -2234,9 +2180,9 @@ function deserializeArrayPattern(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "ArrayPattern",
-      decorators: null,
+      decorators: [],
       elements: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
@@ -2246,9 +2192,7 @@ function deserializeArrayPattern(pos) {
     elements = deserializeVecOptionBindingPattern(pos + 16),
     rest = deserializeOptionBoxBindingRestElement(pos + 40);
   rest !== null && elements.push(rest);
-  node.decorators = [];
   node.elements = elements;
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -2260,9 +2204,9 @@ function deserializeBindingRestElement(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "RestElement",
-      decorators: null,
+      decorators: [],
       argument: null,
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       value: null,
       start: (start = deserializeU32(pos)),
@@ -2270,9 +2214,7 @@ function deserializeBindingRestElement(pos) {
       range: [start, end],
       parent,
     });
-  node.decorators = [];
   node.argument = deserializeBindingPattern(pos + 16);
-  node.optional = false;
   parent = previousParent;
   return node;
 }
@@ -2292,7 +2234,7 @@ function deserializeFunction(pos) {
       params: null,
       returnType: null,
       body: null,
-      expression: null,
+      expression: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -2308,7 +2250,6 @@ function deserializeFunction(pos) {
   node.params = params;
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 72);
   node.body = deserializeOptionBoxFunctionBody(pos + 80);
-  node.expression = false;
   parent = previousParent;
   return node;
 }
@@ -2525,7 +2466,7 @@ function deserializeArrowFunctionExpression(pos) {
       returnType: null,
       body: null,
       id: null,
-      generator: null,
+      generator: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -2540,7 +2481,6 @@ function deserializeArrowFunctionExpression(pos) {
   node.params = deserializeBoxFormalParameters(pos + 24);
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 32);
   node.body = body;
-  node.generator = false;
   parent = previousParent;
   return node;
 }
@@ -2797,9 +2737,9 @@ function deserializeAccessorProperty(pos) {
       override: deserializeBool(pos + 15),
       definite: deserializeBool(pos + 80),
       accessibility: deserializeOptionTSAccessibility(pos + 81),
-      declare: null,
-      optional: null,
-      readonly: null,
+      declare: false,
+      optional: false,
+      readonly: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -2809,9 +2749,6 @@ function deserializeAccessorProperty(pos) {
   node.key = deserializePropertyKey(pos + 40);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 56);
   node.value = deserializeOptionExpression(pos + 64);
-  node.declare = false;
-  node.optional = false;
-  node.readonly = false;
   parent = previousParent;
   return node;
 }
@@ -3014,14 +2951,13 @@ function deserializeExportDefaultDeclaration(pos) {
       __proto__: NodeProto,
       type: "ExportDefaultDeclaration",
       declaration: null,
-      exportKind: null,
+      exportKind: "value",
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
   node.declaration = deserializeExportDefaultDeclarationKind(pos + 16);
-  node.exportKind = "value";
   parent = previousParent;
   return node;
 }
@@ -3225,21 +3161,17 @@ function deserializeBooleanLiteral(pos) {
 
 function deserializeNullLiteral(pos) {
   let start = deserializeU32(pos),
-    end = deserializeU32(pos + 4),
-    previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Literal",
-      value: null,
-      raw: null,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    });
-  node.raw = start === 0 && end === 0 ? null : "null";
-  parent = previousParent;
-  return node;
+    end = deserializeU32(pos + 4);
+  return {
+    __proto__: NodeProto,
+    type: "Literal",
+    value: null,
+    raw: start === 0 && end === 0 ? null : "null",
+    start,
+    end,
+    range: [start, end],
+    parent,
+  };
 }
 
 function deserializeNumericLiteral(pos) {
@@ -3288,26 +3220,21 @@ function deserializeStringLiteral(pos) {
 function deserializeBigIntLiteral(pos) {
   let start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
-    previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "Literal",
-      value: null,
-      raw:
-        int32[(pos + 32) >> 2] === 0 && int32[(pos + 36) >> 2] === 0
-          ? null
-          : sourceText.slice(start, end),
-      bigint: null,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    }),
     bigint = deserializeStr(pos + 16);
-  node.value = BigInt(bigint);
-  node.bigint = bigint;
-  parent = previousParent;
-  return node;
+  return {
+    __proto__: NodeProto,
+    type: "Literal",
+    value: BigInt(bigint),
+    raw:
+      int32[(pos + 32) >> 2] === 0 && int32[(pos + 36) >> 2] === 0
+        ? null
+        : sourceText.slice(start, end),
+    bigint,
+    start,
+    end,
+    range: [start, end],
+    parent,
+  };
 }
 
 function deserializeRegExpLiteral(pos) {
@@ -3396,7 +3323,7 @@ function deserializeJSXOpeningElement(pos) {
       name: null,
       typeArguments: null,
       attributes: null,
-      selfClosing: null,
+      selfClosing: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -3405,7 +3332,6 @@ function deserializeJSXOpeningElement(pos) {
   node.name = deserializeJSXElementName(pos + 16);
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   node.attributes = deserializeVecJSXAttributeItem(pos + 40);
-  node.selfClosing = false;
   parent = previousParent;
   return node;
 }
@@ -3451,19 +3377,15 @@ function deserializeJSXFragment(pos) {
 }
 
 function deserializeJSXOpeningFragment(pos) {
-  let start,
-    end,
-    previousParent = parent,
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "JSXOpeningFragment",
-      start: (start = deserializeU32(pos)),
-      end: (end = deserializeU32(pos + 4)),
-      range: [start, end],
-      parent,
-    });
-  parent = previousParent;
-  return node;
+  let start, end;
+  return {
+    __proto__: NodeProto,
+    type: "JSXOpeningFragment",
+    start: (start = deserializeU32(pos)),
+    end: (end = deserializeU32(pos + 4)),
+    range: [start, end],
+    parent,
+  };
 }
 
 function deserializeJSXClosingFragment(pos) {
@@ -3857,18 +3779,15 @@ function deserializeTSThisParameter(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "Identifier",
-      decorators: null,
-      name: null,
-      optional: null,
+      decorators: [],
+      name: "this",
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
-  node.decorators = [];
-  node.name = "this";
-  node.optional = false;
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 24);
   parent = previousParent;
   return node;
@@ -3923,7 +3842,7 @@ function deserializeTSEnumMember(pos) {
       type: "TSEnumMember",
       id: null,
       initializer: null,
-      computed: null,
+      computed: deserializeU8(pos + 16) > 1,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -3931,7 +3850,6 @@ function deserializeTSEnumMember(pos) {
     });
   node.id = deserializeTSEnumMemberName(pos + 16);
   node.initializer = deserializeOptionExpression(pos + 32);
-  node.computed = deserializeU8(pos + 16) > 1;
   parent = previousParent;
   return node;
 }
@@ -4818,7 +4736,7 @@ function deserializeTSPropertySignature(pos) {
       key: null,
       typeAnnotation: null,
       accessibility: null,
-      static: null,
+      static: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -4826,7 +4744,6 @@ function deserializeTSPropertySignature(pos) {
     });
   node.key = deserializePropertyKey(pos + 16);
   node.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
-  node.static = false;
   parent = previousParent;
   return node;
 }
@@ -4924,8 +4841,8 @@ function deserializeTSMethodSignature(pos) {
       params: null,
       returnType: null,
       accessibility: null,
-      readonly: null,
-      static: null,
+      readonly: false,
+      static: false,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -4938,8 +4855,6 @@ function deserializeTSMethodSignature(pos) {
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 32);
   node.params = params;
   node.returnType = deserializeOptionBoxTSTypeAnnotation(pos + 56);
-  node.readonly = false;
-  node.static = false;
   parent = previousParent;
   return node;
 }
@@ -4973,17 +4888,15 @@ function deserializeTSIndexSignatureName(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "Identifier",
-      decorators: null,
+      decorators: [],
       name: deserializeStr(pos + 16),
-      optional: null,
+      optional: false,
       typeAnnotation: null,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
       parent,
     });
-  node.decorators = [];
-  node.optional = false;
   node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 32);
   parent = previousParent;
   return node;
@@ -5180,9 +5093,9 @@ function deserializeTSGlobalDeclaration(pos) {
       type: "TSModuleDeclaration",
       id: null,
       body: null,
-      kind: null,
+      kind: "global",
       declare: deserializeBool(pos + 88),
-      global: null,
+      global: true,
       start: (start = deserializeU32(pos)),
       end: (end = deserializeU32(pos + 4)),
       range: [start, end],
@@ -5203,8 +5116,6 @@ function deserializeTSGlobalDeclaration(pos) {
     parent,
   };
   node.body = deserializeTSModuleBlock(pos + 24);
-  node.kind = "global";
-  node.global = true;
   parent = previousParent;
   return node;
 }

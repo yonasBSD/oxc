@@ -36,7 +36,8 @@ impl ESTree for BooleanLiteralRaw<'_> {
 #[ast_meta]
 #[estree(
     ts_type = "'null' | null",
-    raw_deser = "(THIS.start === 0 && THIS.end === 0) ? null : 'null'"
+    raw_deser = "(THIS.start === 0 && THIS.end === 0) ? null : 'null'",
+    raw_deser_inline
 )]
 pub struct NullLiteralRaw<'b>(pub &'b NullLiteral);
 
@@ -100,7 +101,8 @@ impl StringLiteralValue<'_, '_> {
     raw_deser = "
         const bigint = DESER[Str](POS_OFFSET.value);
         BigInt(bigint)
-    "
+    ",
+    raw_deser_inline
 )]
 pub struct BigIntLiteralValue<'a, 'b>(#[expect(dead_code)] pub &'b BigIntLiteral<'a>);
 
@@ -118,7 +120,7 @@ impl ESTree for BigIntLiteralValue<'_, '_> {
 ///
 /// `bigint` var in `raw_deser` comes from `BigIntLiteralValue` serializer.
 #[ast_meta]
-#[estree(ts_type = "string", raw_deser = "bigint")]
+#[estree(ts_type = "string", raw_deser = "bigint", raw_deser_inline)]
 pub struct BigIntLiteralBigint<'a, 'b>(pub &'b BigIntLiteral<'a>);
 
 impl ESTree for BigIntLiteralBigint<'_, '_> {
