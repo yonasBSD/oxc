@@ -41,9 +41,12 @@ impl Walk {
                 continue;
             }
 
-            // Normalize `./` prefix
-            let normalized =
-                if let Some(stripped) = path_str.strip_prefix("./") { stripped } else { &path_str };
+            // Normalize `./` prefix (and any consecutive slashes, e.g. `.//src/app.js`)
+            let normalized = if let Some(stripped) = path_str.strip_prefix("./") {
+                stripped.trim_start_matches('/')
+            } else {
+                &path_str
+            };
 
             // Separate glob patterns from concrete paths
             if is_glob_pattern(normalized, cwd) {
