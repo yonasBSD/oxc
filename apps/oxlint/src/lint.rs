@@ -13,8 +13,9 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
+    ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter,
 };
 
 #[cfg(feature = "napi")]
@@ -289,7 +290,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to parse oxlint configuration file.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -308,7 +309,7 @@ impl CliRunner {
                     stdout,
                     &format!(
                         "Failed to build configuration.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                        render_config_builder_error(&handler, e)
                     ),
                 );
                 return CliRunResult::InvalidOptionConfig;
@@ -597,6 +598,19 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
     let mut err = String::new();
     handler.render_report(&mut err, diagnostic).unwrap();
     err
+}
+
+fn render_config_builder_error(
+    handler: &GraphicalReportHandler,
+    error: ConfigBuilderError,
+) -> String {
+    match error {
+        ConfigBuilderError::RuleConfigurationErrors { errors } => errors
+            .iter()
+            .map(|e| render_report(handler, &OxcDiagnostic::error(e.to_string())))
+            .collect::<String>(),
+        _ => render_report(handler, &OxcDiagnostic::error(error.to_string())),
+    }
 }
 
 #[cfg(test)]
@@ -1598,6 +1612,13 @@ export { redundant };
     fn test_invalid_config_invalid_config_in_override() {
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_in_override".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_missing_rule_in_override() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_config_missing_rule_in_override".into())
             .test_and_snapshot(&[]);
     }
 
