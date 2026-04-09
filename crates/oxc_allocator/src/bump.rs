@@ -7,7 +7,6 @@
     clippy::borrow_as_ptr,
     clippy::cast_ptr_alignment,
     clippy::cast_sign_loss,
-    clippy::elidable_lifetime_names,
     clippy::filter_map_next,
     clippy::inconsistent_struct_constructor,
     clippy::inline_always,
@@ -16,7 +15,6 @@
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::mut_from_ref,
-    clippy::needless_lifetimes,
     clippy::ptr_as_ptr,
     clippy::ptr_cast_constness,
     clippy::ref_as_ptr,
@@ -2456,7 +2454,7 @@ impl<'a, const MIN_ALIGN: usize> Iterator for ChunkIter<'a, MIN_ALIGN> {
     }
 }
 
-impl<'a, const MIN_ALIGN: usize> iter::FusedIterator for ChunkIter<'a, MIN_ALIGN> {}
+impl<const MIN_ALIGN: usize> iter::FusedIterator for ChunkIter<'_, MIN_ALIGN> {}
 
 /// An iterator over raw pointers to chunks of allocated memory that this
 /// arena has bump allocated into.
@@ -2498,7 +2496,7 @@ fn oom() -> ! {
     panic!("out of memory")
 }
 
-unsafe impl<'a, const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &'a Bump<MIN_ALIGN> {
+unsafe impl<const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &Bump<MIN_ALIGN> {
     #[inline(always)]
     unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
         self.try_alloc_layout(layout)
@@ -2542,7 +2540,7 @@ unsafe impl<'a, const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &'a Bump<MIN_AL
 #[cfg(doctest)]
 fn _doctest_only() {}
 
-unsafe impl<'a, const MIN_ALIGN: usize> Allocator for &'a Bump<MIN_ALIGN> {
+unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
     #[inline]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
         self.try_alloc_layout(layout)
