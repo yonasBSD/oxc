@@ -4,7 +4,6 @@
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
 #![expect(
-    clippy::borrow_as_ptr,
     clippy::cast_ptr_alignment,
     clippy::cast_sign_loss,
     clippy::inline_always,
@@ -349,18 +348,14 @@ static EMPTY_CHUNK: EmptyChunkFooter = EmptyChunkFooter(ChunkFooter {
     layout: Layout::new::<ChunkFooter>(),
 
     // The start of the (empty) allocatable region for this chunk is itself.
-    data: unsafe { NonNull::new_unchecked(&EMPTY_CHUNK as *const EmptyChunkFooter as *mut u8) },
+    data: NonNull::from_ref(&EMPTY_CHUNK).cast::<u8>(),
 
     // The end of the (empty) allocatable region for this chunk is also itself.
-    ptr: Cell::new(unsafe {
-        NonNull::new_unchecked(&EMPTY_CHUNK as *const EmptyChunkFooter as *mut u8)
-    }),
+    ptr: Cell::new(NonNull::from_ref(&EMPTY_CHUNK).cast::<u8>()),
 
     // Invariant: the last chunk footer in all `ChunkFooter::prev` linked lists
     // is the empty chunk footer, whose `prev` points to itself.
-    prev: Cell::new(unsafe {
-        NonNull::new_unchecked(&EMPTY_CHUNK as *const EmptyChunkFooter as *mut ChunkFooter)
-    }),
+    prev: Cell::new(NonNull::from_ref(&EMPTY_CHUNK.0)),
 
     // Empty chunks count as 0 allocated bytes in an arena.
     allocated_bytes: 0,
