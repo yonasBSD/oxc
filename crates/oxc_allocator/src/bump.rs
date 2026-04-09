@@ -7,8 +7,7 @@
     clippy::inline_always,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
-    clippy::undocumented_unsafe_blocks,
-    clippy::unnecessary_safety_comment
+    clippy::undocumented_unsafe_blocks
 )]
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
@@ -1156,8 +1155,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             unsafe { ptr::write(ptr, f()) };
         }
 
-        //SAFETY: Self-contained:
-        // `p` is allocated for `T` and then a `T` is written.
+        // Self-contained: `p` is allocated for `T` and then a `T` is written.
         let layout = Layout::new::<T>();
         let p = self.try_alloc_layout(layout)?;
         let p = p.as_ptr().cast::<T>();
