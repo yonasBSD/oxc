@@ -11,7 +11,6 @@
 #![expect(clippy::undocumented_unsafe_blocks)]
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
-#![allow(deprecated)]
 
 //! Memory allocation APIs
 //!
@@ -19,13 +18,13 @@
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
 use std::{
-    alloc::{Layout, LayoutErr},
+    alloc::{Layout, LayoutError},
     cmp, fmt, mem,
     ptr::{self, NonNull},
 };
 
 #[cold]
-fn new_layout_err() -> LayoutErr {
+fn new_layout_err() -> LayoutError {
     Layout::from_size_align(1, 3).unwrap_err()
 }
 
@@ -37,8 +36,8 @@ pub fn handle_alloc_error(layout: Layout) -> ! {
 
 pub trait UnstableLayoutMethods {
     fn padding_needed_for(&self, align: usize) -> usize;
-    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutErr>;
-    fn array<T>(n: usize) -> Result<Layout, LayoutErr>;
+    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutError>;
+    fn array<T>(n: usize) -> Result<Layout, LayoutError>;
 }
 
 impl UnstableLayoutMethods for Layout {
@@ -68,7 +67,7 @@ impl UnstableLayoutMethods for Layout {
         len_rounded_up.wrapping_sub(len)
     }
 
-    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutErr> {
+    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutError> {
         let padded_size = self
             .size()
             .checked_add(self.padding_needed_for(self.align()))
@@ -82,7 +81,7 @@ impl UnstableLayoutMethods for Layout {
         }
     }
 
-    fn array<T>(n: usize) -> Result<Layout, LayoutErr> {
+    fn array<T>(n: usize) -> Result<Layout, LayoutError> {
         Layout::new::<T>().repeat(n).map(|(k, offs)| {
             debug_assert!(offs == mem::size_of::<T>());
             k
