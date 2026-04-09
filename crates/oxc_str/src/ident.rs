@@ -108,25 +108,6 @@ pub struct Ident<'a> {
     _marker: PhantomData<&'a str>,
 }
 
-// SAFETY: `Ident` is conceptually equivalent to `&str`, which is Send + Sync.
-// `NonNull` is !Send/!Sync, but `Ident` only stores a pointer to borrowed data.
-unsafe impl Send for Ident<'_> {}
-// SAFETY: See above.
-unsafe impl Sync for Ident<'_> {}
-
-// We can't derive `Clone` or `Copy` because `NonNull` prevents it.
-// The explicit impl is needed for `Copy` to work.
-#[expect(clippy::expl_impl_clone_on_copy)]
-impl Clone for Ident<'_> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl Copy for Ident<'_> {}
-
 /// Create a new [`Ident`] from a string slice.
 ///
 /// This is a const fn that computes the hash at compile time when possible.
@@ -252,66 +233,42 @@ impl<'a> Ident<'a> {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
-    type Cloned = Ident<'new_alloc>;
+// SAFETY: `Ident` is conceptually equivalent to `&str`, which is Send + Sync.
+// `NonNull` is !Send/!Sync, but `Ident` only stores a pointer to borrowed data.
+unsafe impl Send for Ident<'_> {}
+// SAFETY: See above.
+unsafe impl Sync for Ident<'_> {}
 
-    /// Clone the identifier into a new allocator, preserving the precomputed hash.
-    #[inline]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        let s = allocator.alloc_str(self.as_str());
-        let ptr = NonNull::from_ref(s).cast::<u8>();
-        // SAFETY: `ptr` points to a `&str`, with length `self.ident_len()`.
-        // The `&str` was just allocated and so inherits the allocator lifetime.
-        // `hash` is taken from an existing `Ident` containing the same string,
-        // which was originally calculated with `ident_hash`.
-        unsafe { Ident::from_raw(ptr, self.ident_len(), self.ident_hash_value()) }
-    }
-}
+impl Deref for Ident<'_> {
+    type Target = str;
 
-impl<'a> Dummy<'a> for Ident<'a> {
-    /// Create a dummy [`Ident`].
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn dummy(_allocator: &'a Allocator) -> Self {
-        Ident::empty()
+    fn deref(&self) -> &Self::Target {
+        self.as_str()
     }
 }
 
-impl<'alloc> FromIn<'alloc, &Ident<'alloc>> for Ident<'alloc> {
+impl AsRef<str> for Ident<'_> {
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn from_in(s: &Ident<'alloc>, _: &'alloc Allocator) -> Self {
-        *s
+    #[inline(always)]
+    fn as_ref(&self) -> &str {
+        self.as_str()
     }
 }
 
-impl<'alloc> FromIn<'alloc, &str> for Ident<'alloc> {
-    #[inline]
-    fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(allocator.alloc_str(s))
+// We can't derive `Clone` or `Copy` because `NonNull` prevents it.
+// The explicit impl is needed for `Copy` to work.
+#[expect(clippy::expl_impl_clone_on_copy)]
+impl Clone for Ident<'_> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        *self
     }
 }
 
-impl<'alloc> FromIn<'alloc, String> for Ident<'alloc> {
-    #[inline]
-    fn from_in(s: String, allocator: &'alloc Allocator) -> Self {
-        Self::from_in(s.as_str(), allocator)
-    }
-}
-
-impl<'alloc> FromIn<'alloc, &String> for Ident<'alloc> {
-    #[inline]
-    fn from_in(s: &String, allocator: &'alloc Allocator) -> Self {
-        Self::from_in(s.as_str(), allocator)
-    }
-}
-
-impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Ident<'alloc> {
-    #[inline]
-    fn from_in(s: Cow<'_, str>, allocator: &'alloc Allocator) -> Self {
-        Self::from_in(&*s, allocator)
-    }
-}
+impl Copy for Ident<'_> {}
 
 impl<'a> From<&'a str> for Ident<'a> {
     #[expect(clippy::inline_always)]
@@ -373,35 +330,6 @@ impl<'a> From<Ident<'a>> for Cow<'a, str> {
     }
 }
 
-impl Deref for Ident<'_> {
-    type Target = str;
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn deref(&self) -> &Self::Target {
-        self.as_str()
-    }
-}
-
-impl AsRef<str> for Ident<'_> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn as_ref(&self) -> &str {
-        self.as_str()
-    }
-}
-
-/// Allows looking up an `Ident`-keyed hashbrown map with a `&str` key,
-/// without requiring `Ident: Borrow<str>`.
-impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for str {
-    #[inline]
-    fn equivalent(&self, key: &Ident<'_>) -> bool {
-        self == key.as_str()
-    }
-}
-
-impl Eq for Ident<'_> {}
-
 impl PartialEq for Ident<'_> {
     /// Fast-reject equality: compare packed len+hash first, then bytes.
     #[inline]
@@ -409,6 +337,8 @@ impl PartialEq for Ident<'_> {
         self.len_and_hash == other.len_and_hash && self.as_str() == other.as_str()
     }
 }
+
+impl Eq for Ident<'_> {}
 
 impl PartialEq<str> for Ident<'_> {
     #[inline]
@@ -469,6 +399,76 @@ impl Display for Ident<'_> {
 impl Debug for Ident<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Debug::fmt(self.as_str(), f)
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
+    type Cloned = Ident<'new_alloc>;
+
+    /// Clone the identifier into a new allocator, preserving the precomputed hash.
+    #[inline]
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        let s = allocator.alloc_str(self.as_str());
+        let ptr = NonNull::from_ref(s).cast::<u8>();
+        // SAFETY: `ptr` points to a `&str`, with length `self.ident_len()`.
+        // The `&str` was just allocated and so inherits the allocator lifetime.
+        // `hash` is taken from an existing `Ident` containing the same string,
+        // which was originally calculated with `ident_hash`.
+        unsafe { Ident::from_raw(ptr, self.ident_len(), self.ident_hash_value()) }
+    }
+}
+
+impl<'a> Dummy<'a> for Ident<'a> {
+    /// Create a dummy [`Ident`].
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn dummy(_allocator: &'a Allocator) -> Self {
+        Ident::empty()
+    }
+}
+
+impl<'alloc> FromIn<'alloc, &Ident<'alloc>> for Ident<'alloc> {
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this is a no-op
+    fn from_in(s: &Ident<'alloc>, _: &'alloc Allocator) -> Self {
+        *s
+    }
+}
+
+impl<'alloc> FromIn<'alloc, &str> for Ident<'alloc> {
+    #[inline]
+    fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
+        Self::from(allocator.alloc_str(s))
+    }
+}
+
+impl<'alloc> FromIn<'alloc, String> for Ident<'alloc> {
+    #[inline]
+    fn from_in(s: String, allocator: &'alloc Allocator) -> Self {
+        Self::from_in(s.as_str(), allocator)
+    }
+}
+
+impl<'alloc> FromIn<'alloc, &String> for Ident<'alloc> {
+    #[inline]
+    fn from_in(s: &String, allocator: &'alloc Allocator) -> Self {
+        Self::from_in(s.as_str(), allocator)
+    }
+}
+
+impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Ident<'alloc> {
+    #[inline]
+    fn from_in(s: Cow<'_, str>, allocator: &'alloc Allocator) -> Self {
+        Self::from_in(&*s, allocator)
+    }
+}
+
+/// Allows looking up an `Ident`-keyed hashbrown map with a `&str` key,
+/// without requiring `Ident: Borrow<str>`.
+impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for str {
+    #[inline]
+    fn equivalent(&self, key: &Ident<'_>) -> bool {
+        self == key.as_str()
     }
 }
 
