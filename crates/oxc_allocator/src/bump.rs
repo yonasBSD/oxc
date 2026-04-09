@@ -20,7 +20,6 @@
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_safety_comment,
     clippy::unused_self,
-    clippy::single_match_else,
     unsafe_op_in_unsafe_fn
 )]
 #![deny(missing_debug_implementations)]
@@ -447,12 +446,11 @@ pub(crate) const fn round_up_to(n: usize, divisor: usize) -> Option<usize> {
 /// returning `None`.
 #[inline]
 pub(crate) unsafe fn round_up_to_unchecked(n: usize, divisor: usize) -> usize {
-    match round_up_to(n, divisor) {
-        Some(x) => x,
-        None => {
-            debug_assert!(false, "round_up_to_unchecked failed");
-            core::hint::unreachable_unchecked()
-        }
+    if let Some(x) = round_up_to(n, divisor) {
+        x
+    } else {
+        debug_assert!(false, "round_up_to_unchecked failed");
+        core::hint::unreachable_unchecked()
     }
 }
 
