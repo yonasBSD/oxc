@@ -1,6 +1,14 @@
 //! Identifier string type with precomputed hash.
 
-use std::{borrow::Cow, fmt, hash, marker::PhantomData, ops::Deref, ptr::NonNull, slice, str};
+use std::{
+    borrow::Cow,
+    fmt::{self, Debug, Display},
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+    ops::Deref,
+    ptr::NonNull,
+    slice, str,
+};
 
 use oxc_allocator::{
     Allocator, CloneIn, Dummy, FromIn, IdentBuildHasher, StringBuilder as ArenaStringBuilder,
@@ -415,31 +423,31 @@ impl PartialEq<Str<'_>> for Ident<'_> {
     }
 }
 
-impl hash::Hash for Ident<'_> {
+impl Hash for Ident<'_> {
     /// Write the precomputed packed len+hash as a single u64.
     #[cfg(target_pointer_width = "64")]
     #[inline]
-    fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
         hasher.write_u64(self.len_and_hash);
     }
 
     /// Pack len and hash on the fly and write as u64.
     #[cfg(not(target_pointer_width = "64"))]
     #[inline]
-    fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
         hasher.write_u64(pack_len_hash(self.len, self.hash));
     }
 }
 
-impl fmt::Debug for Ident<'_> {
+impl Debug for Ident<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(self.as_str(), f)
+        Debug::fmt(self.as_str(), f)
     }
 }
 
-impl fmt::Display for Ident<'_> {
+impl Display for Ident<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(self.as_str(), f)
+        Display::fmt(self.as_str(), f)
     }
 }
 
