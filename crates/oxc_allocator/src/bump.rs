@@ -20,7 +20,6 @@
     clippy::ref_as_ptr,
     clippy::semicolon_if_nothing_returned,
     clippy::undocumented_unsafe_blocks,
-    clippy::uninlined_format_args,
     clippy::unnecessary_safety_comment,
     clippy::unused_self,
     clippy::single_match_else,
@@ -70,7 +69,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             AllocOrInitError::Alloc(err) => err.fmt(f),
-            AllocOrInitError::Init(err) => write!(f, "initialization failed: {}", err),
+            AllocOrInitError::Init(err) => write!(f, "initialization failed: {err}"),
         }
     }
 }
@@ -2021,8 +2020,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             );
             debug_assert!(
                 is_pointer_aligned_to(aligned_ptr, MIN_ALIGN),
-                "pointer {aligned_ptr:#p} should be aligned to minimum alignment of {:#}",
-                MIN_ALIGN
+                "pointer {aligned_ptr:#p} should be aligned to minimum alignment of {MIN_ALIGN:#}"
             );
             debug_assert!(
                 start <= aligned_ptr && aligned_ptr <= ptr,
