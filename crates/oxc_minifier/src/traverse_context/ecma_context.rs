@@ -10,7 +10,7 @@ use oxc_ecmascript::{
     },
 };
 use oxc_semantic::{IsGlobalReference, SymbolId};
-use oxc_span::format_str;
+use oxc_str::format_str;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags};
 
 use crate::{

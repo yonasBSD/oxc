@@ -279,8 +279,8 @@ impl<'a> Semantic<'a> {
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{AstKind, ast::VariableDeclarationKind};
-    use oxc_span::{SourceType, Str};
-    use oxc_str::static_ident;
+    use oxc_span::SourceType;
+    use oxc_str::{Str, static_ident};
 
     use super::*;
 
