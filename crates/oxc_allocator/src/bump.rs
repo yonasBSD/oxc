@@ -10,7 +10,6 @@
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::mut_from_ref,
-    clippy::ptr_as_ptr,
     clippy::ptr_cast_constness,
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_safety_comment,
@@ -373,9 +372,9 @@ impl ChunkFooter {
         let data = self.data.as_ptr() as *const u8;
         let ptr = self.ptr.get().as_ptr() as *const u8;
         debug_assert!(data <= ptr);
-        debug_assert!(ptr <= ptr::from_ref::<ChunkFooter>(self) as *const u8);
+        debug_assert!(ptr <= ptr::from_ref::<ChunkFooter>(self).cast::<u8>());
         let len =
-            unsafe { (ptr::from_ref::<ChunkFooter>(self) as *const u8).offset_from(ptr) as usize };
+            unsafe { ptr::from_ref::<ChunkFooter>(self).cast::<u8>().offset_from(ptr) as usize };
         (ptr, len)
     }
 
@@ -910,7 +909,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         let footer_ptr = data.as_ptr().add(new_size_without_footer);
         debug_assert_eq!((data.as_ptr() as usize) % align, 0);
         debug_assert_eq!(footer_ptr as usize % CHUNK_ALIGN, 0);
-        let footer_ptr = footer_ptr as *mut ChunkFooter;
+        let footer_ptr = footer_ptr.cast::<ChunkFooter>();
 
         // The bump pointer is initialized to the end of the range we will bump
         // out of, rounded down to the minimum alignment. It is the
@@ -1099,7 +1098,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
         unsafe {
             let p = self.alloc_layout(layout);
-            let p = p.as_ptr() as *mut T;
+            let p = p.as_ptr().cast::<T>();
             inner_writer(p, f);
             &mut *p
         }
@@ -1153,7 +1152,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         // `p` is allocated for `T` and then a `T` is written.
         let layout = Layout::new::<T>();
         let p = self.try_alloc_layout(layout)?;
-        let p = p.as_ptr() as *mut T;
+        let p = p.as_ptr().cast::<T>();
 
         unsafe {
             inner_writer(p, f);
