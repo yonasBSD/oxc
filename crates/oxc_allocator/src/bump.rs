@@ -357,9 +357,9 @@ impl ChunkFooter {
         let ptr = self.ptr.get().as_ptr();
         debug_assert!(data <= ptr);
         debug_assert!(ptr.cast_const() <= ptr::from_ref::<ChunkFooter>(self).cast::<u8>());
-        #[expect(clippy::cast_sign_loss, reason = "`ptr` is always before or points to footer")]
+        // SAFETY: `ptr` is always before or equal to footer
         let len =
-            unsafe { ptr::from_ref::<ChunkFooter>(self).cast::<u8>().offset_from(ptr) as usize };
+            unsafe { ptr::from_ref::<ChunkFooter>(self).cast::<u8>().offset_from_unsigned(ptr) };
         (ptr, len)
     }
 
