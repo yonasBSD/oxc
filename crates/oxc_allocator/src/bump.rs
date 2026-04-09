@@ -12,7 +12,6 @@
     clippy::mut_from_ref,
     clippy::ptr_as_ptr,
     clippy::ptr_cast_constness,
-    clippy::ref_as_ptr,
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_safety_comment,
     unsafe_op_in_unsafe_fn
@@ -374,8 +373,9 @@ impl ChunkFooter {
         let data = self.data.as_ptr() as *const u8;
         let ptr = self.ptr.get().as_ptr() as *const u8;
         debug_assert!(data <= ptr);
-        debug_assert!(ptr <= self as *const ChunkFooter as *const u8);
-        let len = unsafe { (self as *const ChunkFooter as *const u8).offset_from(ptr) as usize };
+        debug_assert!(ptr <= ptr::from_ref::<ChunkFooter>(self) as *const u8);
+        let len =
+            unsafe { (ptr::from_ref::<ChunkFooter>(self) as *const u8).offset_from(ptr) as usize };
         (ptr, len)
     }
 
@@ -1219,7 +1219,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 // since it grows backwards, it seems unlikely that we'd get
                 // any more than the `Result`'s discriminant this way, if
                 // anything at all.
-                &mut *(t as *mut _)
+                &mut *ptr::from_mut(t)
             }),
             Err(e) => unsafe {
                 // If this result was the last allocation in this arena, we can
@@ -1264,7 +1264,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 //
                 // The order between this and the deallocation doesn't matter
                 // because `Self: !Sync`.
-                Err(ptr::read(e as *const _))
+                Err(ptr::read(ptr::from_ref(e)))
             },
         }
     }
@@ -1329,7 +1329,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 // since it grows backwards, it seems unlikely that we'd get
                 // any more than the `Result`'s discriminant this way, if
                 // anything at all.
-                &mut *(t as *mut _)
+                &mut *ptr::from_mut(t)
             }),
             Err(e) => unsafe {
                 // If this result was the last allocation in this arena, we can
@@ -1374,7 +1374,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 //
                 // The order between this and the deallocation doesn't matter
                 // because `Self: !Sync`.
-                Err(AllocOrInitError::Init(ptr::read(e as *const _)))
+                Err(AllocOrInitError::Init(ptr::read(ptr::from_ref(e))))
             },
         }
     }
