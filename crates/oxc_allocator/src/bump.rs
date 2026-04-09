@@ -9,7 +9,6 @@
     clippy::cast_sign_loss,
     clippy::inline_always,
     clippy::manual_div_ceil,
-    clippy::map_unwrap_or,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::mut_from_ref,
@@ -844,11 +843,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         allocation_limit_remaining: Option<usize>,
         new_chunk_memory_details: NewChunkMemoryDetails,
     ) -> bool {
-        allocation_limit_remaining
-            .map(|allocation_limit_left| {
-                allocation_limit_left >= new_chunk_memory_details.new_size_without_footer
-            })
-            .unwrap_or(true)
+        allocation_limit_remaining.is_none_or(|allocation_limit_remaining| {
+            allocation_limit_remaining >= new_chunk_memory_details.new_size_without_footer
+        })
     }
 
     /// Determine the memory details including final size, alignment and final
