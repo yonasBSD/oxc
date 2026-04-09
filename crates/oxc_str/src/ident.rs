@@ -57,16 +57,28 @@ impl Copy for Ident<'_> {}
 
 impl<'a> Ident<'a> {
     /// Create an [`Ident`] from raw components.
+    ///
+    /// # SAFETY
+    ///
+    /// * `ptr` must point to the start of a valid UTF-8 string, of length `len`.
+    /// * The memory pointed to `len` bytes starting at `ptr` must be valid for reads and immutable for lifetime `'a`.
+    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`.
     #[cfg(target_pointer_width = "64")]
     #[inline]
-    const fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
+    const unsafe fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
         Self { ptr, len_and_hash: pack_len_hash(len, hash), _marker: PhantomData }
     }
 
     /// Create an [`Ident`] from raw components.
+    ///
+    /// # SAFETY
+    ///
+    /// * `ptr` must point to the start of a valid UTF-8 string, of length `len`.
+    /// * The memory pointed to `len` bytes starting at `ptr` must be valid for reads and immutable for lifetime `'a`.
+    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`.
     #[cfg(not(target_pointer_width = "64"))]
     #[inline]
-    const fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
+    const unsafe fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
         Self { ptr, len, hash, _marker: PhantomData }
     }
 
@@ -111,13 +123,18 @@ impl<'a> Ident<'a> {
         let hash = ident_hash(bytes);
         // SAFETY: A &str's pointer is always non-null.
         let ptr = unsafe { NonNull::new_unchecked(bytes.as_ptr().cast_mut()) };
-        Self::from_raw(ptr, len, hash)
+        // SAFETY: `ptr` points to a `&str`, with length `len`.
+        // The `&str` has lifetime `'a`, so the memory backing the `&str` is immutable for lifetime `'a`.
+        // `hash` was computed with `ident_hash`.
+        unsafe { Self::from_raw(ptr, len, hash) }
     }
 
     /// Get an [`Ident`] containing the empty string (`""`).
     #[inline]
     pub const fn empty() -> Self {
-        Self::from_raw(NonNull::dangling(), 0, ident_hash(b""))
+        // SAFETY: Any pointer is valid for reads of 0 bytes, for the lifetime of the program.
+        // `hash` is computed with `ident_hash`.
+        unsafe { Self::from_raw(NonNull::dangling(), 0, ident_hash(b"")) }
     }
 
     /// Borrow a string slice.
@@ -200,7 +217,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
         let s = allocator.alloc_str(self.as_str());
         // SAFETY: `alloc_str` returns a valid `&str` whose pointer is non-null.
         let ptr = unsafe { NonNull::new_unchecked(s.as_ptr().cast_mut()) };
-        Ident::from_raw(ptr, self.ident_len(), self.ident_hash_value())
+        // SAFETY: `ptr` points to a `&str`, with length `self.ident_len()`.
+        // The `&str` was just allocated and so inherits the allocator lifetime.
+        // `hash` is taken from an existing `Ident` containing the same string,
+        // which was originally calculated with `ident_hash`.
+        unsafe { Ident::from_raw(ptr, self.ident_len(), self.ident_hash_value()) }
     }
 }
 
