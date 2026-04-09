@@ -7,7 +7,6 @@
     clippy::inline_always,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
-    clippy::mut_from_ref,
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_safety_comment,
     unsafe_op_in_unsafe_fn
@@ -1073,6 +1072,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.alloc_with(|| "hello");
     /// assert_eq!(*x, "hello");
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_with<F, T>(&self, f: F) -> &mut T
     where
@@ -1127,6 +1127,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.try_alloc_with(|| "hello");
     /// assert_eq!(x, Ok(&mut "hello"));
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_with<F, T>(&self, f: F) -> Result<&mut T, AllocErr>
     where
@@ -1200,6 +1201,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// assert_eq!(*x, "hello");
     /// # Result::<_, ()>::Ok(())
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_try_with<F, T, E>(&self, f: F) -> Result<&mut T, E>
     where
@@ -1310,6 +1312,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// assert_eq!(*x, "hello");
     /// # Result::<_, AllocOrInitError<()>>::Ok(())
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_try_with<F, T, E>(&self, f: F) -> Result<&mut T, AllocOrInitError<E>>
     where
@@ -1396,6 +1399,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.alloc_slice_copy(&[1, 2, 3]);
     /// assert_eq!(x, &[1, 2, 3]);
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_slice_copy<T>(&self, src: &[T]) -> &mut [T]
     where
@@ -1427,6 +1431,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.try_alloc_slice_copy(&[1, 2, 3, 4, 5, 6]);
     /// assert_eq!(x, Err(AllocErr)); // too big
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_slice_copy<T>(&self, src: &[T]) -> Result<&mut [T], AllocErr>
     where
@@ -1468,6 +1473,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let clones = bump.alloc_slice_clone(&originals);
     /// assert_eq!(originals, clones);
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_slice_clone<T>(&self, src: &[T]) -> &mut [T]
     where
@@ -1486,6 +1492,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     }
 
     /// Like `alloc_slice_clone` but does not panic on failure.
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_slice_clone<T>(&self, src: &[T]) -> Result<&mut [T], AllocErr>
     where
@@ -1518,6 +1525,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let hello = bump.alloc_str("hello world");
     /// assert_eq!("hello world", hello);
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_str(&self, src: &str) -> &mut str {
         let buffer = self.alloc_slice_copy(src.as_bytes());
@@ -1544,6 +1552,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let hello = bump.try_alloc_str("hello world");
     /// assert_eq!(Err(AllocErr), hello);
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_str(&self, src: &str) -> Result<&mut str, AllocErr> {
         let buffer = self.try_alloc_slice_copy(src.as_bytes())?;
@@ -1572,6 +1581,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.alloc_slice_fill_with(5, |i| 5 * (i + 1));
     /// assert_eq!(x, &[5, 10, 15, 20, 25]);
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_slice_fill_with<T, F>(&self, len: usize, mut f: F) -> &mut [T]
     where
@@ -1621,6 +1631,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// );
     /// assert_eq!(x, Err(()));
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_slice_try_fill_with<T, F, E>(&self, len: usize, mut f: F) -> Result<&mut [T], E>
     where
@@ -1668,6 +1679,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.try_alloc_slice_fill_with(10, |i| 5 * (i + 1));
     /// assert_eq!(x, Err(AllocErr));
     /// ```
+    #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_slice_fill_with<T, F>(
         &self,
