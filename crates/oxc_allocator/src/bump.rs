@@ -16,7 +16,6 @@
     clippy::ref_as_ptr,
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_safety_comment,
-    clippy::unused_self,
     unsafe_op_in_unsafe_fn
 )]
 #![deny(missing_debug_implementations)]
@@ -775,6 +774,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// assert_eq!(bump4.min_align(), 4);
     /// ```
     #[inline]
+    #[expect(clippy::unused_self, reason = "part of public API")]
     pub fn min_align(&self) -> usize {
         MIN_ALIGN
     }
