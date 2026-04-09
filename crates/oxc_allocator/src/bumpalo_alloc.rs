@@ -9,7 +9,6 @@
 // except according to those terms.
 
 #![expect(
-    clippy::collapsible_if,
     clippy::equatable_if_let,
     clippy::missing_safety_doc,
     clippy::redundant_closure_for_method_calls,
@@ -393,11 +392,12 @@ pub unsafe trait Alloc {
     ) -> Result<NonNull<u8>, AllocErr> {
         let old_size = layout.size();
 
+        #[expect(clippy::collapsible_else_if)]
         if new_size >= old_size {
             if let Ok(()) = self.grow_in_place(ptr, layout, new_size) {
                 return Ok(ptr);
             }
-        } else if new_size < old_size {
+        } else {
             if let Ok(()) = self.shrink_in_place(ptr, layout, new_size) {
                 return Ok(ptr);
             }
