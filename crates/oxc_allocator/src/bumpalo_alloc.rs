@@ -8,7 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![expect(clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks)]
+#![expect(clippy::undocumented_unsafe_blocks)]
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 #![allow(deprecated)]
@@ -204,7 +204,7 @@ impl fmt::Display for CannotReallocInPlace {
 ///    currently allocated via an allocator `a`, then it is legal to
 ///    use that layout to deallocate it, i.e. `a.dealloc(ptr, k);`.
 ///
-/// # Unsafety
+/// # SAFETY
 ///
 /// The `Alloc` trait is an `unsafe` trait for a number of reasons, and
 /// implementors must ensure that they adhere to these contracts:
