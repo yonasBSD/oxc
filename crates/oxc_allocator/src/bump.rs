@@ -18,7 +18,6 @@
     clippy::ptr_as_ptr,
     clippy::ptr_cast_constness,
     clippy::ref_as_ptr,
-    clippy::semicolon_if_nothing_returned,
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_safety_comment,
     clippy::unused_self,
@@ -2550,7 +2549,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
 
     #[inline]
     unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
-        Bump::<MIN_ALIGN>::dealloc(self, ptr, layout)
+        Bump::<MIN_ALIGN>::dealloc(self, ptr, layout);
     }
 
     #[inline]
