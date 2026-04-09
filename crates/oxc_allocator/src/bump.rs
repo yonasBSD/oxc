@@ -4,7 +4,6 @@
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
 #![expect(
-    clippy::cast_ptr_alignment,
     clippy::cast_sign_loss,
     clippy::inline_always,
     clippy::missing_errors_doc,
@@ -908,6 +907,10 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         let footer_ptr = data.as_ptr().add(new_size_without_footer);
         debug_assert_eq!((data.as_ptr() as usize) % align, 0);
         debug_assert_eq!(footer_ptr as usize % CHUNK_ALIGN, 0);
+        #[expect(
+            clippy::cast_ptr_alignment,
+            reason = "footer_ptr is aligned to CHUNK_ALIGN, which is == align_of::<ChunkFooter>()"
+        )]
         let footer_ptr = footer_ptr.cast::<ChunkFooter>();
 
         // The bump pointer is initialized to the end of the range we will bump
