@@ -127,6 +127,27 @@ impl Clone for Ident<'_> {
 
 impl Copy for Ident<'_> {}
 
+/// Create a new [`Ident`] from a string slice.
+///
+/// This is a const fn that computes the hash at compile time when possible.
+/// Use this for strings that already have the correct lifetime
+/// (e.g. arena-allocated strings, or `'static` string literals).
+///
+/// This function has to be public so it can be used in `static_ident!` macro,
+/// but it is not intended to be used directly. Only exported under the `__internal` module.
+#[expect(clippy::inline_always, clippy::cast_possible_truncation)]
+#[inline(always)]
+pub const fn new_const_ident(s: &str) -> Ident<'_> {
+    let bytes = s.as_bytes();
+    let len = bytes.len() as u32;
+    let hash = ident_hash(bytes);
+    let ptr = NonNull::from_ref(bytes).cast::<u8>();
+    // SAFETY: `ptr` points to a `&str`, with length `len`.
+    // The `&str` has lifetime `'a`, so the memory backing the `&str` is immutable for lifetime `'a`.
+    // `hash` was computed with `ident_hash`.
+    unsafe { Ident::from_raw(ptr, len, hash) }
+}
+
 impl<'a> Ident<'a> {
     /// Create an [`Ident`] from raw components.
     ///
@@ -150,24 +171,6 @@ impl<'a> Ident<'a> {
     #[inline]
     const fn ident_hash_value(&self) -> u32 {
         self.len_and_hash.hash()
-    }
-
-    /// Create a new [`Ident`] from a string slice.
-    ///
-    /// This is a const fn that computes the hash at compile time when possible.
-    /// Use this for strings that already have the correct lifetime
-    /// (e.g. arena-allocated strings, or `'static` string literals).
-    #[expect(clippy::inline_always, clippy::cast_possible_truncation)]
-    #[inline(always)]
-    pub const fn new_const(s: &'a str) -> Self {
-        let bytes = s.as_bytes();
-        let len = bytes.len() as u32;
-        let hash = ident_hash(bytes);
-        let ptr = NonNull::from_ref(bytes).cast::<u8>();
-        // SAFETY: `ptr` points to a `&str`, with length `len`.
-        // The `&str` has lifetime `'a`, so the memory backing the `&str` is immutable for lifetime `'a`.
-        // `hash` was computed with `ident_hash`.
-        unsafe { Self::from_raw(ptr, len, hash) }
     }
 
     /// Get an [`Ident`] containing the empty string (`""`).
@@ -314,7 +317,7 @@ impl<'a> From<&'a str> for Ident<'a> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn from(s: &'a str) -> Self {
-        Self::new_const(s)
+        new_const_ident(s)
     }
 }
 
@@ -496,20 +499,38 @@ pub type ArenaIdentHashMap<'alloc, V> =
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;
 
-pub const AGGREGATE_ERROR: Ident<'static> = Ident::new_const("AggregateError");
-pub const ARGUMENTS: Ident<'static> = Ident::new_const("arguments");
-pub const ARRAY: Ident<'static> = Ident::new_const("Array");
-pub const ERROR: Ident<'static> = Ident::new_const("Error");
-pub const EXPORTS: Ident<'static> = Ident::new_const("exports");
-pub const FUNCTION: Ident<'static> = Ident::new_const("Function");
-pub const GLOBAL_THIS: Ident<'static> = Ident::new_const("globalThis");
-pub const MATH: Ident<'static> = Ident::new_const("Math");
-pub const MODULE: Ident<'static> = Ident::new_const("module");
-pub const OBJECT: Ident<'static> = Ident::new_const("Object");
-pub const PROCESS: Ident<'static> = Ident::new_const("process");
-pub const REG_EXP: Ident<'static> = Ident::new_const("RegExp");
-pub const REQUIRE: Ident<'static> = Ident::new_const("require");
-pub const TYPE_ERROR: Ident<'static> = Ident::new_const("TypeError");
+/// Creates an [`Ident<'static>`] for a string literal, evaluated at compile time.
+///
+/// ```
+/// use oxc_str::static_ident;
+///
+/// let ident = static_ident!("require");
+/// assert_eq!(ident.as_str(), "require");
+/// ```
+///
+/// Can also be used in const context:
+///
+/// ```
+/// use oxc_str::{Ident, static_ident};
+///
+/// const REQUIRE: Ident<'static> = static_ident!("require");
+/// assert_eq!(REQUIRE.as_str(), "require");
+/// ```
+///
+/// Only accepts string literals, not variables:
+///
+/// ```compile_fail
+/// use oxc_str::static_ident;
+///
+/// let s = "hello";
+/// let ident = static_ident!(s);
+/// ```
+#[macro_export]
+macro_rules! static_ident {
+    ($s:literal) => {
+        $crate::__internal::new_const_ident($s)
+    };
+}
 
 /// Creates an [`Ident`] using interpolation of runtime expressions.
 ///
@@ -594,7 +615,7 @@ mod test {
 
     #[test]
     fn ident_new_const() {
-        let ident = Ident::new_const("world");
+        let ident = new_const_ident("world");
         assert_eq!(ident.as_str(), "world");
     }
 
@@ -678,6 +699,19 @@ mod test {
     fn ident_debug() {
         let ident = Ident::from("test");
         assert_eq!(format!("{ident:?}"), "\"test\"");
+    }
+
+    #[test]
+    fn static_ident_correct() {
+        let ident = static_ident!("require");
+        assert_eq!(ident.as_str(), "require");
+        assert_eq!(ident, Ident::from("require"));
+    }
+
+    #[test]
+    fn static_ident_const_context() {
+        const IDENT: Ident<'static> = static_ident!("hello");
+        assert_eq!(IDENT.as_str(), "hello");
     }
 
     #[test]
