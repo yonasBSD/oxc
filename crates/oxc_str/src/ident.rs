@@ -121,8 +121,7 @@ impl<'a> Ident<'a> {
         let bytes = s.as_bytes();
         let len = bytes.len() as u32;
         let hash = ident_hash(bytes);
-        // SAFETY: A &str's pointer is always non-null.
-        let ptr = unsafe { NonNull::new_unchecked(bytes.as_ptr().cast_mut()) };
+        let ptr = NonNull::from_ref(bytes).cast::<u8>();
         // SAFETY: `ptr` points to a `&str`, with length `len`.
         // The `&str` has lifetime `'a`, so the memory backing the `&str` is immutable for lifetime `'a`.
         // `hash` was computed with `ident_hash`.
@@ -215,8 +214,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
     #[inline]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         let s = allocator.alloc_str(self.as_str());
-        // SAFETY: `alloc_str` returns a valid `&str` whose pointer is non-null.
-        let ptr = unsafe { NonNull::new_unchecked(s.as_ptr().cast_mut()) };
+        let ptr = NonNull::from_ref(s).cast::<u8>();
         // SAFETY: `ptr` points to a `&str`, with length `self.ident_len()`.
         // The `&str` was just allocated and so inherits the allocator lifetime.
         // `hash` is taken from an existing `Ident` containing the same string,
