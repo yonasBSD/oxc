@@ -2227,7 +2227,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// the most recent allocation being earlier in the slice, and the least
     /// recent allocation being towards the end of the slice.
     ///
-    /// ## Safety
+    /// # SAFETY
     ///
     /// Because this method takes `&mut self`, we know that the bump arena
     /// reference is unique and therefore there aren't any active references to
@@ -2302,7 +2302,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// }
     /// ```
     pub fn iter_allocated_chunks(&mut self) -> ChunkIter<'_, MIN_ALIGN> {
-        // Safety: Ensured by mutable borrow of `self`.
+        // SAFETY: Ensured by mutable borrow of `self`.
         let raw = unsafe { self.iter_allocated_chunks_raw() };
         ChunkIter { raw, bump: PhantomData }
     }
@@ -2315,7 +2315,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// well as ensuring that the iterator is not invalidated by new
     /// allocations.
     ///
-    /// ## Safety
+    /// # SAFETY
     ///
     /// Allocations from this arena must not be performed while the returned
     /// iterator is alive. If reading the chunk data (or casting to a reference)
