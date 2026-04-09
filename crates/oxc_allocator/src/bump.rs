@@ -13,7 +13,8 @@ use std::{
     alloc::{Layout, alloc, dealloc},
     cell::Cell,
     cmp::Ordering,
-    fmt::Display,
+    fmt::{self, Display},
+    hint::unreachable_unchecked,
     iter,
     marker::PhantomData,
     mem,
@@ -43,7 +44,7 @@ impl<E> From<AllocErr> for AllocOrInitError<E> {
     }
 }
 impl<E: Display> Display for AllocOrInitError<E> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AllocOrInitError::Alloc(err) => err.fmt(f),
             AllocOrInitError::Init(err) => write!(f, "initialization failed: {err}"),
@@ -430,7 +431,7 @@ pub(crate) unsafe fn round_up_to_unchecked(n: usize, divisor: usize) -> usize {
         x
     } else {
         debug_assert!(false, "round_up_to_unchecked failed");
-        unsafe { std::hint::unreachable_unchecked() }
+        unsafe { unreachable_unchecked() }
     }
 }
 
@@ -1466,7 +1467,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         let layout = Layout::for_value(src);
         let dst = self.try_alloc_layout(layout)?.cast::<T>();
         let result = unsafe {
-            std::ptr::copy_nonoverlapping(src.as_ptr(), dst.as_ptr(), src.len());
+            ptr::copy_nonoverlapping(src.as_ptr(), dst.as_ptr(), src.len());
             slice::from_raw_parts_mut(dst.as_ptr(), src.len())
         };
         Ok(result)
@@ -2348,7 +2349,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let bump = Bump::new();
     /// let _x = bump.alloc_slice_fill_default::<u32>(5);
     /// let bytes = bump.allocated_bytes();
-    /// assert!(bytes >= std::mem::size_of::<u32>() * 5);
+    /// assert!(bytes >= size_of::<u32>() * 5);
     /// ```
     pub fn allocated_bytes(&self) -> usize {
         let footer = self.current_chunk_footer.get();
