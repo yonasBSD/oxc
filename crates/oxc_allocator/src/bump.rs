@@ -351,13 +351,12 @@ impl EmptyChunkFooter {
 }
 
 impl ChunkFooter {
-    // Returns the start and length of the currently allocated region of this
-    // chunk.
-    fn as_raw_parts(&self) -> (*const u8, usize) {
+    /// Returns the start and length of the currently allocated region of this chunk.
+    fn as_raw_parts(&self) -> (*mut u8, usize) {
         let data = self.data.as_ptr().cast_const();
-        let ptr = self.ptr.get().as_ptr().cast_const();
+        let ptr = self.ptr.get().as_ptr();
         debug_assert!(data <= ptr);
-        debug_assert!(ptr <= ptr::from_ref::<ChunkFooter>(self).cast::<u8>());
+        debug_assert!(ptr.cast_const() <= ptr::from_ref::<ChunkFooter>(self).cast::<u8>());
         #[expect(clippy::cast_sign_loss, reason = "`ptr` is always before or points to footer")]
         let len =
             unsafe { ptr::from_ref::<ChunkFooter>(self).cast::<u8>().offset_from(ptr) as usize };
@@ -2585,7 +2584,7 @@ impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
             }
             let (ptr, len) = foot.as_raw_parts();
             self.footer = foot.prev.get();
-            Some((ptr.cast_mut(), len))
+            Some((ptr, len))
         }
     }
 }
