@@ -12,7 +12,7 @@ use std::{
 
 use oxc_allocator::{
     Allocator, CloneIn, Dummy, FromIn, IdentBuildHasher, StringBuilder as ArenaStringBuilder,
-    ident_hash, pack_len_hash,
+    ident_hash,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
@@ -20,6 +20,75 @@ use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{CompactStr, Str};
+
+/// A packed representation of `len` and `hash` for `Ident` - 64-bit platforms version.
+///
+/// Stored as a single `u64`, with `len` in lower 32 bits, `hash` in upper 32 bits.
+#[cfg(target_pointer_width = "64")]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+struct LenAndHash(u64);
+
+#[cfg(target_pointer_width = "64")]
+#[expect(clippy::inline_always)] // All methods are trivial
+impl LenAndHash {
+    #[inline(always)]
+    const fn new(len: u32, hash: u32) -> Self {
+        Self((len as u64) | ((hash as u64) << 32))
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    #[inline(always)]
+    const fn len(self) -> u32 {
+        self.0 as u32
+    }
+
+    #[inline(always)]
+    const fn hash(self) -> u32 {
+        (self.0 >> 32) as u32
+    }
+
+    #[inline(always)]
+    const fn to_u64(self) -> u64 {
+        self.0
+    }
+}
+
+/// A packed representation of `len` and `hash` for `Ident` - 32-bit platforms version.
+///
+/// Stored as 2 separate `u32`s for `len` and `hash`.
+/// This is preferable on 32-bit platforms, because it has alignment 4, so `Ident` is 12 bytes, not 16.
+#[cfg(not(target_pointer_width = "64"))]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[repr(C)]
+struct LenAndHash {
+    len: u32,
+    hash: u32,
+}
+
+#[cfg(not(target_pointer_width = "64"))]
+#[expect(clippy::inline_always)] // All methods are trivial
+impl LenAndHash {
+    #[inline(always)]
+    const fn new(len: u32, hash: u32) -> Self {
+        Self { len, hash }
+    }
+
+    #[inline(always)]
+    const fn len(self) -> u32 {
+        self.len
+    }
+
+    #[inline(always)]
+    const fn hash(self) -> u32 {
+        self.hash
+    }
+
+    #[inline(always)]
+    const fn to_u64(self) -> u64 {
+        (self.len as u64) | ((self.hash as u64) << 32)
+    }
+}
 
 /// An identifier string for oxc_allocator with a precomputed hash.
 ///
@@ -35,12 +104,7 @@ use crate::{CompactStr, Str};
 #[repr(C)]
 pub struct Ident<'a> {
     ptr: NonNull<u8>,
-    #[cfg(target_pointer_width = "64")]
-    len_and_hash: u64,
-    #[cfg(not(target_pointer_width = "64"))]
-    len: u32,
-    #[cfg(not(target_pointer_width = "64"))]
-    hash: u32,
+    len_and_hash: LenAndHash,
     _marker: PhantomData<&'a str>,
 }
 
@@ -71,51 +135,21 @@ impl<'a> Ident<'a> {
     /// * `ptr` must point to the start of a valid UTF-8 string, of length `len`.
     /// * The memory pointed to `len` bytes starting at `ptr` must be valid for reads and immutable for lifetime `'a`.
     /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`.
-    #[cfg(target_pointer_width = "64")]
     #[inline]
     const unsafe fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
-        Self { ptr, len_and_hash: pack_len_hash(len, hash), _marker: PhantomData }
-    }
-
-    /// Create an [`Ident`] from raw components.
-    ///
-    /// # SAFETY
-    ///
-    /// * `ptr` must point to the start of a valid UTF-8 string, of length `len`.
-    /// * The memory pointed to `len` bytes starting at `ptr` must be valid for reads and immutable for lifetime `'a`.
-    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`.
-    #[cfg(not(target_pointer_width = "64"))]
-    #[inline]
-    const unsafe fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
-        Self { ptr, len, hash, _marker: PhantomData }
+        Self { ptr, len_and_hash: LenAndHash::new(len, hash), _marker: PhantomData }
     }
 
     /// Get the length of the identifier string.
-    #[cfg(target_pointer_width = "64")]
     #[inline]
     const fn ident_len(&self) -> u32 {
-        (self.len_and_hash & 0xFFFF_FFFF) as u32
-    }
-
-    /// Get the length of the identifier string.
-    #[cfg(not(target_pointer_width = "64"))]
-    #[inline]
-    const fn ident_len(&self) -> u32 {
-        self.len
+        self.len_and_hash.len()
     }
 
     /// Get the precomputed hash value.
-    #[cfg(target_pointer_width = "64")]
     #[inline]
     const fn ident_hash_value(&self) -> u32 {
-        (self.len_and_hash >> 32) as u32
-    }
-
-    /// Get the precomputed hash value.
-    #[cfg(not(target_pointer_width = "64"))]
-    #[inline]
-    const fn ident_hash_value(&self) -> u32 {
-        self.hash
+        self.len_and_hash.hash()
     }
 
     /// Create a new [`Ident`] from a string slice.
@@ -367,17 +401,9 @@ impl Eq for Ident<'_> {}
 
 impl PartialEq for Ident<'_> {
     /// Fast-reject equality: compare packed len+hash first, then bytes.
-    #[cfg(target_pointer_width = "64")]
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.len_and_hash == other.len_and_hash && self.as_str() == other.as_str()
-    }
-
-    /// Fast-reject equality: compare len and hash first, then bytes.
-    #[cfg(not(target_pointer_width = "64"))]
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.len == other.len && self.hash == other.hash && self.as_str() == other.as_str()
     }
 }
 
@@ -425,17 +451,9 @@ impl PartialEq<Str<'_>> for Ident<'_> {
 
 impl Hash for Ident<'_> {
     /// Write the precomputed packed len+hash as a single u64.
-    #[cfg(target_pointer_width = "64")]
     #[inline]
     fn hash<H: Hasher>(&self, hasher: &mut H) {
-        hasher.write_u64(self.len_and_hash);
-    }
-
-    /// Pack len and hash on the fly and write as u64.
-    #[cfg(not(target_pointer_width = "64"))]
-    #[inline]
-    fn hash<H: Hasher>(&self, hasher: &mut H) {
-        hasher.write_u64(pack_len_hash(self.len, self.hash));
+        hasher.write_u64(self.len_and_hash.to_u64());
     }
 }
 
