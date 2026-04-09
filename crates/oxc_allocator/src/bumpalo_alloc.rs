@@ -10,7 +10,6 @@
 
 #![expect(
     clippy::missing_safety_doc,
-    clippy::redundant_closure_for_method_calls,
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_literal_bound,
     clippy::unused_self,
@@ -632,7 +631,7 @@ pub unsafe trait Alloc {
         Self: Sized,
     {
         let k = Layout::new::<T>();
-        if k.size() > 0 { unsafe { self.alloc(k).map(|p| p.cast()) } } else { Err(AllocErr) }
+        if k.size() > 0 { unsafe { self.alloc(k).map(NonNull::cast) } } else { Err(AllocErr) }
     }
 
     /// Deallocates a block suitable for holding an instance of `T`.
@@ -699,7 +698,7 @@ pub unsafe trait Alloc {
         Self: Sized,
     {
         match Layout::array::<T>(n) {
-            Ok(layout) if layout.size() > 0 => unsafe { self.alloc(layout).map(|p| p.cast()) },
+            Ok(layout) if layout.size() > 0 => unsafe { self.alloc(layout).map(NonNull::cast) },
             _ => Err(AllocErr),
         }
     }
