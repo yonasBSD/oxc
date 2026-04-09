@@ -3,12 +3,7 @@
 //! This module was originally copied from `bumpalo` at commit a47f6d6b7b5fee9c99a285f0de80257a0a982ef3
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
-#![expect(
-    clippy::inline_always,
-    clippy::missing_errors_doc,
-    clippy::missing_panics_doc,
-    clippy::undocumented_unsafe_blocks
-)]
+#![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 
@@ -560,6 +555,7 @@ impl Bump<1> {
     /// let bump = Bump::try_new();
     /// # let _ = bump.unwrap();
     /// ```
+    #[expect(clippy::missing_errors_doc, reason = "`try_with_capacity(0)` always returns `Ok`")]
     pub fn try_new() -> Result<Self, AllocErr> {
         Bump::try_with_capacity(0)
     }
@@ -597,6 +593,17 @@ impl Bump<1> {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(AllocErr)` if any of:
+    ///
+    /// 1. A [`Layout`] cannot be constructed from `capacity` and `MIN_ALIGN`
+    ///    (for example because the rounded-up size overflows `isize`).
+    /// 2. Computing the new chunk's memory details overflows.
+    /// 3. The underlying global allocator fails to allocate the initial chunk.
+    ///
+    /// When `capacity` is `0` no allocation is performed and `Ok` is always returned.
     pub fn try_with_capacity(capacity: usize) -> Result<Self, AllocErr> {
         Self::try_with_min_align_and_capacity(capacity)
     }
@@ -717,6 +724,17 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// Panics on invalid minimum alignments.
     ///
     /// Panics if allocating the initial capacity fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(AllocErr)` if any of:
+    ///
+    /// 1. A [`Layout`] cannot be constructed from `capacity` and `MIN_ALIGN`
+    ///    (for example because the rounded-up size overflows `isize`).
+    /// 2. Computing the new chunk's memory details overflows.
+    /// 3. The underlying global allocator fails to allocate the initial chunk.
+    ///
+    /// When `capacity` is `0` no allocation is performed and `Ok` is always returned.
     pub fn try_with_min_align_and_capacity(capacity: usize) -> Result<Self, AllocErr> {
         assert!(MIN_ALIGN.is_power_of_two(), "MIN_ALIGN must be a power of two; found {MIN_ALIGN}");
         assert!(
@@ -1434,6 +1452,13 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.try_alloc_slice_copy(&[1, 2, 3, 4, 5, 6]);
     /// assert_eq!(x, Err(AllocErr)); // too big
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(AllocErr)` if reserving a fresh `Layout::for_value(src)`
+    /// region via [`Bump::try_alloc_layout`] fails — that is, if the current
+    /// chunk has no room, a new chunk cannot be obtained from the underlying
+    /// allocator, or the configured `allocation_limit` would be exceeded.
     #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_slice_copy<T>(&self, src: &[T]) -> Result<&mut [T], AllocErr>
@@ -1495,6 +1520,13 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     }
 
     /// Like `alloc_slice_clone` but does not panic on failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(AllocErr)` if reserving a fresh `Layout::for_value(src)`
+    /// region via [`Bump::try_alloc_layout`] fails (no room in the current
+    /// chunk, a new chunk cannot be obtained from the underlying allocator,
+    /// or the configured `allocation_limit` would be exceeded).
     #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_slice_clone<T>(&self, src: &[T]) -> Result<&mut [T], AllocErr>
@@ -1555,6 +1587,14 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let hello = bump.try_alloc_str("hello world");
     /// assert_eq!(Err(AllocErr), hello);
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Forwards the error from [`Bump::try_alloc_slice_copy`]: returns
+    /// `Err(AllocErr)` if reserving `src.len()` bytes via
+    /// [`Bump::try_alloc_layout`] fails because the current chunk has no
+    /// room, a new chunk cannot be obtained from the underlying allocator,
+    /// or the configured `allocation_limit` would be exceeded.
     #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_str(&self, src: &str) -> Result<&mut str, AllocErr> {
@@ -1634,6 +1674,14 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// );
     /// assert_eq!(x, Err(()));
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(E)` propagated from the initialisation closure `f` as
+    /// soon as it returns `Err` for any element; any elements already written
+    /// are abandoned and the just-made backing allocation is deallocated.
+    /// Allocation failure is *not* reported via `Err` here — it panics via
+    /// [`Bump::alloc_layout`] instead.
     #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn alloc_slice_try_fill_with<T, F, E>(&self, len: usize, mut f: F) -> Result<&mut [T], E>
@@ -1682,6 +1730,15 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// let x = bump.try_alloc_slice_fill_with(10, |i| 5 * (i + 1));
     /// assert_eq!(x, Err(AllocErr));
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(AllocErr)` if [`Layout::array::<T>(len)`](Layout::array)
+    /// fails (for example because `len * size_of::<T>()` overflows `isize`),
+    /// or if reserving that layout via [`Bump::try_alloc_layout`] fails
+    /// because there is no room in the current chunk, a new chunk cannot be
+    /// obtained from the underlying allocator, or the configured
+    /// `allocation_limit` would be exceeded.
     #[expect(clippy::mut_from_ref)]
     #[inline(always)]
     pub fn try_alloc_slice_fill_with<T, F>(
@@ -1730,6 +1787,14 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     }
 
     /// Same as `alloc_slice_fill_copy` but does not panic on failure.
+    ///
+    /// # Errors
+    ///
+    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// `Err(AllocErr)` if constructing `Layout::array::<T>(len)` fails or the
+    /// underlying [`Bump::try_alloc_layout`] call fails (no room in the
+    /// current chunk, underlying allocator failure, or `allocation_limit`
+    /// exceeded).
     #[inline(always)]
     pub fn try_alloc_slice_fill_copy<T: Copy>(
         &self,
@@ -1766,6 +1831,14 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     }
 
     /// Like `alloc_slice_fill_clone` but does not panic on failure.
+    ///
+    /// # Errors
+    ///
+    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// `Err(AllocErr)` if constructing `Layout::array::<T>(len)` fails or the
+    /// underlying [`Bump::try_alloc_layout`] call fails (no room in the
+    /// current chunk, underlying allocator failure, or `allocation_limit`
+    /// exceeded).
     #[inline(always)]
     pub fn try_alloc_slice_fill_clone<T: Clone>(
         &self,
@@ -1837,6 +1910,13 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// );
     /// assert_eq!(x, Err(()));
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(E)` propagated from the first `Err` item yielded by
+    /// `iter`, forwarded through [`Bump::alloc_slice_try_fill_with`]. As in
+    /// that method, allocation failure is reported by panicking rather than
+    /// via `Err`.
     #[inline(always)]
     pub fn alloc_slice_try_fill_iter<T, I, E>(&self, iter: I) -> Result<&mut [T], E>
     where
@@ -1864,6 +1944,20 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///     .iter().cloned().map(|i| i * i)).unwrap();
     /// assert_eq!(x, [4, 9, 25]);
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the supplied iterator's `ExactSizeIterator::len` implementation
+    /// reports more elements than the iterator actually yields (i.e. `iter.next()`
+    /// returns `None` before `iter.len()` items have been produced).
+    ///
+    /// # Errors
+    ///
+    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// `Err(AllocErr)` if constructing `Layout::array::<T>(iter.len())`
+    /// fails or the underlying [`Bump::try_alloc_layout`] call fails (no
+    /// room in the current chunk, underlying allocator failure, or
+    /// `allocation_limit` exceeded).
     #[inline(always)]
     pub fn try_alloc_slice_fill_iter<T, I>(&self, iter: I) -> Result<&mut [T], AllocErr>
     where
@@ -1902,6 +1996,14 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     }
 
     /// Like `alloc_slice_fill_default` but does not panic on failure.
+    ///
+    /// # Errors
+    ///
+    /// Forwards the error from [`Bump::try_alloc_slice_fill_with`]: returns
+    /// `Err(AllocErr)` if constructing `Layout::array::<T>(len)` fails or the
+    /// underlying [`Bump::try_alloc_layout`] call fails (no room in the
+    /// current chunk, underlying allocator failure, or `allocation_limit`
+    /// exceeded).
     #[inline(always)]
     pub fn try_alloc_slice_fill_default<T: Default>(
         &self,
