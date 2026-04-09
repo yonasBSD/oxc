@@ -439,15 +439,15 @@ impl Hash for Ident<'_> {
     }
 }
 
-impl Debug for Ident<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        Debug::fmt(self.as_str(), f)
-    }
-}
-
 impl Display for Ident<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Display::fmt(self.as_str(), f)
+    }
+}
+
+impl Debug for Ident<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(self.as_str(), f)
     }
 }
 
