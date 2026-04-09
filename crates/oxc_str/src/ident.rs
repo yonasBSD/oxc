@@ -427,14 +427,6 @@ impl<'a> Dummy<'a> for Ident<'a> {
     }
 }
 
-impl<'alloc> FromIn<'alloc, &Ident<'alloc>> for Ident<'alloc> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn from_in(s: &Ident<'alloc>, _: &'alloc Allocator) -> Self {
-        *s
-    }
-}
-
 impl<'alloc> FromIn<'alloc, &str> for Ident<'alloc> {
     #[inline]
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
