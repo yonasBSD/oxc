@@ -14,7 +14,6 @@
     clippy::missing_safety_doc,
     clippy::redundant_closure_for_method_calls,
     clippy::undocumented_unsafe_blocks,
-    clippy::uninlined_format_args,
     clippy::unnecessary_literal_bound,
     clippy::unused_self,
     unsafe_op_in_unsafe_fn
@@ -43,7 +42,7 @@ fn new_layout_err() -> LayoutErr {
 #[cold]
 #[inline(never)]
 pub fn handle_alloc_error(layout: Layout) -> ! {
-    panic!("encountered allocation error: {:?}", layout)
+    panic!("encountered allocation error: {layout:?}")
 }
 
 pub trait UnstableLayoutMethods {
