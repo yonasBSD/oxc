@@ -7,7 +7,6 @@
     clippy::borrow_as_ptr,
     clippy::cast_ptr_alignment,
     clippy::cast_sign_loss,
-    clippy::filter_map_next,
     clippy::inline_always,
     clippy::manual_div_ceil,
     clippy::map_unwrap_or,
@@ -2069,7 +2068,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             let min_new_chunk_size = layout.size().max(DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
             let mut base_size =
                 (current_layout.size() - FOOTER_SIZE).checked_mul(2)?.max(min_new_chunk_size);
-            let chunk_memory_details = iter::from_fn(|| {
+            let mut chunk_memory_details = iter::from_fn(|| {
                 let bypass_min_chunk_size_for_small_limits = matches!(self.allocation_limit(), Some(limit) if layout.size() < limit
                             && base_size >= layout.size()
                             && limit < DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER
@@ -2084,18 +2083,16 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 }
             });
 
-            let new_footer = chunk_memory_details
-                .filter_map(|chunk_memory_details| {
-                    if Self::chunk_fits_under_limit(
-                        allocation_limit_remaining,
-                        chunk_memory_details,
-                    ) {
-                        Self::new_chunk(chunk_memory_details, layout, current_footer)
-                    } else {
-                        None
-                    }
-                })
-                .next()?;
+            let new_footer = chunk_memory_details.find_map(|new_chunk_memory_details| {
+                if Self::chunk_fits_under_limit(
+                    allocation_limit_remaining,
+                    new_chunk_memory_details,
+                ) {
+                    Self::new_chunk(new_chunk_memory_details, layout, current_footer)
+                } else {
+                    None
+                }
+            })?;
 
             debug_assert_eq!(new_footer.as_ref().data.as_ptr() as usize % layout.align(), 0);
 
