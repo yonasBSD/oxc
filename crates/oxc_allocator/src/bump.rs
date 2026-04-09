@@ -8,8 +8,7 @@
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::undocumented_unsafe_blocks,
-    clippy::unnecessary_safety_comment,
-    unsafe_op_in_unsafe_fn
+    clippy::unnecessary_safety_comment
 )]
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
@@ -397,10 +396,12 @@ impl<const MIN_ALIGN: usize> Drop for Bump<MIN_ALIGN> {
 
 #[inline]
 unsafe fn dealloc_chunk_list(mut footer: NonNull<ChunkFooter>) {
-    while !footer.as_ref().is_empty() {
-        let f = footer;
-        footer = f.as_ref().prev.get();
-        dealloc(f.as_ref().data.as_ptr(), f.as_ref().layout);
+    unsafe {
+        while !footer.as_ref().is_empty() {
+            let f = footer;
+            footer = f.as_ref().prev.get();
+            dealloc(f.as_ref().data.as_ptr(), f.as_ref().layout);
+        }
     }
 }
 
@@ -437,7 +438,7 @@ pub(crate) unsafe fn round_up_to_unchecked(n: usize, divisor: usize) -> usize {
         x
     } else {
         debug_assert!(false, "round_up_to_unchecked failed");
-        core::hint::unreachable_unchecked()
+        unsafe { core::hint::unreachable_unchecked() }
     }
 }
 
@@ -460,9 +461,11 @@ pub(crate) fn round_mut_ptr_down_to(ptr: *mut u8, divisor: usize) -> *mut u8 {
 pub(crate) unsafe fn round_mut_ptr_up_to_unchecked(ptr: *mut u8, divisor: usize) -> *mut u8 {
     debug_assert!(divisor > 0);
     debug_assert!(divisor.is_power_of_two());
-    let aligned = round_up_to_unchecked(ptr as usize, divisor);
-    let delta = aligned - (ptr as usize);
-    ptr.add(delta)
+    unsafe {
+        let aligned = round_up_to_unchecked(ptr as usize, divisor);
+        let delta = aligned - (ptr as usize);
+        ptr.add(delta)
+    }
 }
 
 // The typical page size these days.
@@ -892,52 +895,54 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         requested_layout: Layout,
         prev: NonNull<ChunkFooter>,
     ) -> Option<NonNull<ChunkFooter>> {
-        let NewChunkMemoryDetails { new_size_without_footer, align, size } =
-            new_chunk_memory_details;
+        unsafe {
+            let NewChunkMemoryDetails { new_size_without_footer, align, size } =
+                new_chunk_memory_details;
 
-        let layout = layout_from_size_align(size, align).ok()?;
+            let layout = layout_from_size_align(size, align).ok()?;
 
-        debug_assert!(size >= requested_layout.size());
+            debug_assert!(size >= requested_layout.size());
 
-        let data = alloc(layout);
-        let data = NonNull::new(data)?;
+            let data = alloc(layout);
+            let data = NonNull::new(data)?;
 
-        // The `ChunkFooter` is at the end of the chunk.
-        let footer_ptr = data.as_ptr().add(new_size_without_footer);
-        debug_assert_eq!((data.as_ptr() as usize) % align, 0);
-        debug_assert_eq!(footer_ptr as usize % CHUNK_ALIGN, 0);
-        #[expect(
-            clippy::cast_ptr_alignment,
-            reason = "footer_ptr is aligned to CHUNK_ALIGN, which is == align_of::<ChunkFooter>()"
-        )]
-        let footer_ptr = footer_ptr.cast::<ChunkFooter>();
+            // The `ChunkFooter` is at the end of the chunk.
+            let footer_ptr = data.as_ptr().add(new_size_without_footer);
+            debug_assert_eq!((data.as_ptr() as usize) % align, 0);
+            debug_assert_eq!(footer_ptr as usize % CHUNK_ALIGN, 0);
+            #[expect(
+                clippy::cast_ptr_alignment,
+                reason = "footer_ptr is aligned to CHUNK_ALIGN, which is == align_of::<ChunkFooter>()"
+            )]
+            let footer_ptr = footer_ptr.cast::<ChunkFooter>();
 
-        // The bump pointer is initialized to the end of the range we will bump
-        // out of, rounded down to the minimum alignment. It is the
-        // `NewChunkMemoryDetails` constructor's responsibility to ensure that
-        // even after this rounding we have enough non-zero capacity in the
-        // chunk.
-        let ptr = round_mut_ptr_down_to(footer_ptr.cast::<u8>(), MIN_ALIGN);
-        debug_assert_eq!(ptr as usize % MIN_ALIGN, 0);
-        debug_assert!(
-            data.as_ptr() <= ptr,
-            "bump pointer {ptr:#p} should still be greater than or equal to the \
-             start of the bump chunk {data:#p}"
-        );
-        debug_assert_eq!((ptr as usize) - (data.as_ptr() as usize), new_size_without_footer);
+            // The bump pointer is initialized to the end of the range we will bump
+            // out of, rounded down to the minimum alignment. It is the
+            // `NewChunkMemoryDetails` constructor's responsibility to ensure that
+            // even after this rounding we have enough non-zero capacity in the
+            // chunk.
+            let ptr = round_mut_ptr_down_to(footer_ptr.cast::<u8>(), MIN_ALIGN);
+            debug_assert_eq!(ptr as usize % MIN_ALIGN, 0);
+            debug_assert!(
+                data.as_ptr() <= ptr,
+                "bump pointer {ptr:#p} should still be greater than or equal to the \
+                 start of the bump chunk {data:#p}"
+            );
+            debug_assert_eq!((ptr as usize) - (data.as_ptr() as usize), new_size_without_footer);
 
-        let ptr = Cell::new(NonNull::new_unchecked(ptr));
+            let ptr = Cell::new(NonNull::new_unchecked(ptr));
 
-        // The `allocated_bytes` of a new chunk counts the total size
-        // of the chunks, not how much of the chunks are used.
-        let allocated_bytes = prev.as_ref().allocated_bytes + new_size_without_footer;
+            // The `allocated_bytes` of a new chunk counts the total size
+            // of the chunks, not how much of the chunks are used.
+            let allocated_bytes = prev.as_ref().allocated_bytes + new_size_without_footer;
 
-        ptr::write(
-            footer_ptr,
-            ChunkFooter { data, layout, prev: Cell::new(prev), ptr, allocated_bytes },
-        );
+            ptr::write(
+                footer_ptr,
+                ChunkFooter { data, layout, prev: Cell::new(prev), ptr, allocated_bytes },
+            );
 
-        Some(NonNull::new_unchecked(footer_ptr))
+            Some(NonNull::new_unchecked(footer_ptr))
+        }
     }
 
     /// Reset this bump allocator.
@@ -1093,7 +1098,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             // directly into the heap instead. It seems we get it to realize
             // this most consistently if we put this critical line into it's
             // own function instead of inlining it into the surrounding code.
-            ptr::write(ptr, f());
+            unsafe { ptr::write(ptr, f()) };
         }
 
         let layout = Layout::new::<T>();
@@ -1148,7 +1153,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             // directly into the heap instead. It seems we get it to realize
             // this most consistently if we put this critical line into it's
             // own function instead of inlining it into the surrounding code.
-            ptr::write(ptr, f());
+            unsafe { ptr::write(ptr, f()) };
         }
 
         //SAFETY: Self-contained:
@@ -2266,7 +2271,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     #[inline]
     unsafe fn is_last_allocation(&self, ptr: NonNull<u8>) -> bool {
         let footer = self.current_chunk_footer.get();
-        let footer = footer.as_ref();
+        let footer = unsafe { footer.as_ref() };
         footer.ptr.get() == ptr
     }
 
@@ -2274,17 +2279,19 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     unsafe fn dealloc(&self, ptr: NonNull<u8>, layout: Layout) {
         // If the pointer is the last allocation we made, we can reuse the bytes,
         // otherwise they are simply leaked -- at least until somebody calls reset().
-        if self.is_last_allocation(ptr) {
-            let ptr = self.current_chunk_footer.get().as_ref().ptr.get();
-            let ptr = ptr.as_ptr().add(layout.size());
+        unsafe {
+            if self.is_last_allocation(ptr) {
+                let ptr = self.current_chunk_footer.get().as_ref().ptr.get();
+                let ptr = ptr.as_ptr().add(layout.size());
 
-            let ptr = round_mut_ptr_up_to_unchecked(ptr, MIN_ALIGN);
-            debug_assert!(
-                is_pointer_aligned_to(ptr, MIN_ALIGN),
-                "bump pointer {ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
-            );
-            let ptr = NonNull::new_unchecked(ptr);
-            self.current_chunk_footer.get().as_ref().ptr.set(ptr);
+                let ptr = round_mut_ptr_up_to_unchecked(ptr, MIN_ALIGN);
+                debug_assert!(
+                    is_pointer_aligned_to(ptr, MIN_ALIGN),
+                    "bump pointer {ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
+                );
+                let ptr = NonNull::new_unchecked(ptr);
+                self.current_chunk_footer.get().as_ref().ptr.set(ptr);
+            }
         }
     }
 
@@ -2314,7 +2321,9 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
                 // We know that these regions are nonoverlapping because
                 // `new_ptr` is a fresh allocation.
-                ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), new_layout.size());
+                unsafe {
+                    ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), new_layout.size());
+                }
 
                 Ok(new_ptr)
             };
@@ -2329,7 +2338,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         // the requested alignment.
         let delta = round_down_to(old_size - new_size, new_layout.align().max(MIN_ALIGN));
 
-        if self.is_last_allocation(ptr)
+        if unsafe { self.is_last_allocation(ptr) }
                 // Only reclaim the excess space (which requires a copy) if it
                 // is worth it: we are actually going to recover "enough" space
                 // and we can do a non-overlapping copy.
@@ -2360,23 +2369,25 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 // up to avoid this issue.
                 && delta >= old_size.div_ceil(2)
         {
-            let footer = self.current_chunk_footer.get();
-            let footer = footer.as_ref();
+            unsafe {
+                let footer = self.current_chunk_footer.get();
+                let footer = footer.as_ref();
 
-            // NB: new_ptr is aligned, because ptr *has to* be aligned, and we
-            // made sure delta is aligned.
-            let new_ptr = NonNull::new_unchecked(footer.ptr.get().as_ptr().add(delta));
-            debug_assert!(
-                is_pointer_aligned_to(new_ptr.as_ptr(), MIN_ALIGN),
-                "bump pointer {new_ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
-            );
-            footer.ptr.set(new_ptr);
+                // NB: new_ptr is aligned, because ptr *has to* be aligned, and we
+                // made sure delta is aligned.
+                let new_ptr = NonNull::new_unchecked(footer.ptr.get().as_ptr().add(delta));
+                debug_assert!(
+                    is_pointer_aligned_to(new_ptr.as_ptr(), MIN_ALIGN),
+                    "bump pointer {new_ptr:#p} should be aligned to the minimum alignment of {MIN_ALIGN:#x}"
+                );
+                footer.ptr.set(new_ptr);
 
-            // NB: we know it is non-overlapping because of the size check
-            // in the `if` condition.
-            ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), new_size);
+                // NB: we know it is non-overlapping because of the size check
+                // in the `if` condition.
+                ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), new_size);
 
-            return Ok(new_ptr);
+                return Ok(new_ptr);
+            }
         }
 
         // If this wasn't the last allocation, or shrinking wasn't worth it,
@@ -2398,21 +2409,21 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
         let align_is_compatible = old_layout.align() >= new_layout.align();
 
-        if align_is_compatible && self.is_last_allocation(ptr) {
+        if align_is_compatible && unsafe { self.is_last_allocation(ptr) } {
             // Try to allocate the delta size within this same block so we can
             // reuse the currently allocated space.
             let delta = new_size - old_size;
             if let Some(p) =
                 self.try_alloc_layout_fast(layout_from_size_align(delta, old_layout.align())?)
             {
-                ptr::copy(ptr.as_ptr(), p.as_ptr(), old_size);
+                unsafe { ptr::copy(ptr.as_ptr(), p.as_ptr(), old_size) };
                 return Ok(p);
             }
         }
 
         // Fallback: do a fresh allocation and copy the existing data into it.
         let new_ptr = self.try_alloc_layout(new_layout)?;
-        ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), old_size);
+        unsafe { ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), old_size) };
         Ok(new_ptr)
     }
 }
@@ -2499,7 +2510,7 @@ unsafe impl<const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &Bump<MIN_ALIGN> {
 
     #[inline]
     unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
-        Bump::<MIN_ALIGN>::dealloc(self, ptr, layout);
+        unsafe { Bump::<MIN_ALIGN>::dealloc(self, ptr, layout) };
     }
 
     #[inline]
@@ -2517,9 +2528,9 @@ unsafe impl<const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &Bump<MIN_ALIGN> {
 
         let new_layout = layout_from_size_align(new_size, layout.align())?;
         if new_size <= old_size {
-            Bump::shrink(self, ptr, layout, new_layout)
+            unsafe { Bump::shrink(self, ptr, layout, new_layout) }
         } else {
-            Bump::grow(self, ptr, layout, new_layout)
+            unsafe { Bump::grow(self, ptr, layout, new_layout) }
         }
     }
 }
@@ -2547,7 +2558,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
 
     #[inline]
     unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
-        Bump::<MIN_ALIGN>::dealloc(self, ptr, layout);
+        unsafe { Bump::<MIN_ALIGN>::dealloc(self, ptr, layout) };
     }
 
     #[inline]
@@ -2557,7 +2568,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        Bump::<MIN_ALIGN>::shrink(self, ptr, old_layout, new_layout)
+        unsafe { Bump::<MIN_ALIGN>::shrink(self, ptr, old_layout, new_layout) }
             .map(|p| unsafe {
                 NonNull::new_unchecked(ptr::slice_from_raw_parts_mut(p.as_ptr(), new_layout.size()))
             })
@@ -2571,7 +2582,7 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        Bump::<MIN_ALIGN>::grow(self, ptr, old_layout, new_layout)
+        unsafe { Bump::<MIN_ALIGN>::grow(self, ptr, old_layout, new_layout) }
             .map(|p| unsafe {
                 NonNull::new_unchecked(ptr::slice_from_raw_parts_mut(p.as_ptr(), new_layout.size()))
             })
@@ -2585,8 +2596,8 @@ unsafe impl<const MIN_ALIGN: usize> Allocator for &Bump<MIN_ALIGN> {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        let mut ptr = self.grow(ptr, old_layout, new_layout)?;
-        ptr.as_mut()[old_layout.size()..].fill(0);
+        let mut ptr = unsafe { self.grow(ptr, old_layout, new_layout) }?;
+        (unsafe { ptr.as_mut() })[old_layout.size()..].fill(0);
         Ok(ptr)
     }
 }
