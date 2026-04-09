@@ -4,7 +4,6 @@
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
 #![expect(
-    clippy::cast_sign_loss,
     clippy::inline_always,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
@@ -371,6 +370,7 @@ impl ChunkFooter {
         let ptr = self.ptr.get().as_ptr().cast_const();
         debug_assert!(data <= ptr);
         debug_assert!(ptr <= ptr::from_ref::<ChunkFooter>(self).cast::<u8>());
+        #[expect(clippy::cast_sign_loss, reason = "`ptr` is always before or points to footer")]
         let len =
             unsafe { ptr::from_ref::<ChunkFooter>(self).cast::<u8>().offset_from(ptr) as usize };
         (ptr, len)
