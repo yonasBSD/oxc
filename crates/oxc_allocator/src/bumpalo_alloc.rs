@@ -8,12 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![expect(
-    clippy::missing_safety_doc,
-    clippy::undocumented_unsafe_blocks,
-    clippy::unused_self,
-    unsafe_op_in_unsafe_fn
-)]
+#![expect(clippy::missing_safety_doc, clippy::undocumented_unsafe_blocks, unsafe_op_in_unsafe_fn)]
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 #![allow(deprecated)]
@@ -131,6 +126,7 @@ pub struct CannotReallocInPlace;
 
 // #[unstable(feature = "allocator_api", issue = "32838")]
 impl CannotReallocInPlace {
+    #[expect(clippy::unused_self, reason = "part of public API")]
     pub fn description(&self) -> &'static str {
         "cannot reallocate allocator's memory in place"
     }
