@@ -7,8 +7,6 @@
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
 
-use crate::bumpalo_alloc;
-
 use std::{
     alloc::{Layout, alloc, dealloc},
     cell::Cell,
@@ -24,7 +22,8 @@ use std::{
 
 use allocator_api2::alloc::{AllocError, Allocator};
 
-pub use bumpalo_alloc::AllocErr;
+use crate::bumpalo_alloc::Alloc as BumpaloAlloc;
+pub use crate::bumpalo_alloc::AllocErr;
 
 /// An error returned from [`Bump::try_alloc_try_with`].
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -2601,7 +2600,7 @@ fn oom() -> ! {
     panic!("out of memory")
 }
 
-unsafe impl<const MIN_ALIGN: usize> bumpalo_alloc::Alloc for &Bump<MIN_ALIGN> {
+unsafe impl<const MIN_ALIGN: usize> BumpaloAlloc for &Bump<MIN_ALIGN> {
     #[inline(always)]
     unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
         self.try_alloc_layout(layout)
@@ -2747,11 +2746,9 @@ mod tests {
         );
     }
 
-    // Uses private `alloc` module.
+    // Uses private `bumpalo_alloc` module.
     #[test]
     fn test_realloc() {
-        use crate::bumpalo_alloc::Alloc;
-
         unsafe {
             const CAPACITY: usize = DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER;
             let mut b = Bump::<1>::with_min_align_and_capacity(CAPACITY);
@@ -2796,19 +2793,17 @@ mod tests {
         }
     }
 
-    // Uses our private `alloc` module.
+    // Uses our private `bumpalo_alloc` module.
     #[test]
     fn invalid_read() {
-        use crate::bumpalo_alloc::Alloc;
-
         let mut b = &Bump::new();
 
         unsafe {
             let l1 = Layout::from_size_align(12000, 4).unwrap();
-            let p1 = Alloc::alloc(&mut b, l1).unwrap();
+            let p1 = BumpaloAlloc::alloc(&mut b, l1).unwrap();
 
             let l2 = Layout::from_size_align(1000, 4).unwrap();
-            Alloc::alloc(&mut b, l2).unwrap();
+            BumpaloAlloc::alloc(&mut b, l2).unwrap();
 
             let p1 = b.realloc(p1, l1, 24000).unwrap();
             let l3 = Layout::from_size_align(24000, 4).unwrap();
