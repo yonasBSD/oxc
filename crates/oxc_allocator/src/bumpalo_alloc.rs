@@ -11,7 +11,6 @@
 #![expect(
     clippy::missing_safety_doc,
     clippy::undocumented_unsafe_blocks,
-    clippy::unnecessary_literal_bound,
     clippy::unused_self,
     unsafe_op_in_unsafe_fn
 )]
@@ -132,7 +131,7 @@ pub struct CannotReallocInPlace;
 
 // #[unstable(feature = "allocator_api", issue = "32838")]
 impl CannotReallocInPlace {
-    pub fn description(&self) -> &str {
+    pub fn description(&self) -> &'static str {
         "cannot reallocate allocator's memory in place"
     }
 }
