@@ -8,7 +8,6 @@
     clippy::cast_ptr_alignment,
     clippy::cast_sign_loss,
     clippy::inline_always,
-    clippy::manual_div_ceil,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::mut_from_ref,
@@ -2327,7 +2326,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 // is worth it: we are actually going to recover "enough" space
                 // and we can do a non-overlapping copy.
                 //
-                // We do `(old_size + 1) / 2` so division rounds up rather than
+                // We do `old_size.div_ceil(2)` so division rounds up rather than
                 // down. Consider when:
                 //
                 //     old_size = 5
@@ -2351,7 +2350,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
                 // But we MUST NOT have overlapping ranges because we use
                 // `copy_nonoverlapping` below! Therefore, we round the division
                 // up to avoid this issue.
-                && delta >= (old_size + 1) / 2
+                && delta >= old_size.div_ceil(2)
         {
             let footer = self.current_chunk_footer.get();
             let footer = footer.as_ref();
