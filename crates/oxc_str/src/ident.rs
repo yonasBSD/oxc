@@ -36,14 +36,14 @@ pub struct Ident<'a> {
     _marker: PhantomData<&'a str>,
 }
 
-// SAFETY: Ident is conceptually equivalent to &str, which is Send + Sync.
-// NonNull is !Send/!Sync, but Ident only stores a pointer to borrowed data.
+// SAFETY: `Ident` is conceptually equivalent to `&str`, which is Send + Sync.
+// `NonNull` is !Send/!Sync, but `Ident` only stores a pointer to borrowed data.
 unsafe impl Send for Ident<'_> {}
 // SAFETY: See above.
 unsafe impl Sync for Ident<'_> {}
 
-// We can't derive Clone/Copy because NonNull prevents it.
-// The explicit impl is needed for Copy to work.
+// We can't derive `Clone` or `Copy` because `NonNull` prevents it.
+// The explicit impl is needed for `Copy` to work.
 #[expect(clippy::expl_impl_clone_on_copy)]
 impl Clone for Ident<'_> {
     #[expect(clippy::inline_always)]
@@ -164,6 +164,7 @@ impl<'a> Ident<'a> {
     /// # Panics
     ///
     /// Panics if the sum of length of all strings exceeds `isize::MAX`.
+    //
     // `#[inline(always)]` because want compiler to be able to optimize where some of `strings`
     // are statically known. See `Allocator::alloc_concat_strs_array`.
     #[expect(clippy::inline_always)]
