@@ -51,7 +51,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 
 /// An arena to bump allocate into.
 ///
-/// ## No `Drop`s
+/// # No `Drop`s
 ///
 /// Objects that are bump-allocated will never have their [`Drop`] implementation
 /// called &mdash; unless you do it manually yourself. This makes it relatively
@@ -95,7 +95,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// [`bumpalo::boxed::Box::new_in`]: boxed/struct.Box.html#method.new_in
 /// [`std::boxed::Box`]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 ///
-/// ## Example
+/// # Example
 ///
 /// ```
 /// # use oxc_allocator::bump::Bump;
@@ -112,7 +112,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// *s = "the bump allocator; and also is a buffalo";
 /// ```
 ///
-/// ## Allocation Methods Come in Many Flavors
+/// # Allocation Methods Come in Many Flavors
 ///
 /// There are various allocation methods on `Bump`, the simplest being
 /// [`alloc`][Bump::alloc]. The others exist to satisfy some combination of
@@ -146,7 +146,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 ///   </tbody>
 /// </table>
 ///
-/// ### Fallible Allocation: The `try_alloc_` Method Prefix
+/// ## Fallible Allocation: The `try_alloc_` Method Prefix
 ///
 /// These allocation methods let you recover from out-of-memory (OOM)
 /// scenarios, rather than raising a panic on OOM.
@@ -172,7 +172,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// }
 /// ```
 ///
-/// ### Initializer Functions: The `_with` Method Suffix
+/// ## Initializer Functions: The `_with` Method Suffix
 ///
 /// Calling one of the generic `…alloc(x)` methods is essentially equivalent to
 /// the matching [`…alloc_with(|| x)`](?search=alloc_with). However if you use
@@ -190,7 +190,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// enough to help the compiler realize that this optimization is valid and
 /// to construct `x` directly onto the heap.
 ///
-/// #### Warning
+/// ### Warning
 ///
 /// These functions critically depend on compiler optimizations to achieve their
 /// desired effect. This means that it is not an effective tool when compiling
@@ -200,7 +200,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// the value is constructed on the heap. To the best of our knowledge no such
 /// guarantee can be made in stable Rust as of 1.54.
 ///
-/// ### Fallible Initialization: The `_try_with` Method Suffix
+/// ## Fallible Initialization: The `_try_with` Method Suffix
 ///
 /// The generic [`…alloc_try_with(|| x)`](?search=_try_with) methods behave
 /// like the purely `_with` suffixed methods explained above. However, they
@@ -208,7 +208,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// [`Result`] and will attempt to undo the initial allocation if this closure
 /// returns [`Err`].
 ///
-/// #### Warning
+/// ### Warning
 ///
 /// If the inner closure returns [`Ok`], space for the entire [`Result`] remains
 /// allocated inside `self`. This can be a problem especially if the [`Err`]
@@ -247,7 +247,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// [`Ok`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Ok
 /// [`Err`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
 ///
-/// ### `Bump` Allocation Limits
+/// ## `Bump` Allocation Limits
 ///
 /// `bumpalo` supports setting a limit on the maximum bytes of memory that can
 /// be allocated for use in a particular `Bump` arena. This limit can be set and removed with
@@ -256,7 +256,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// a `Bump`. Updating the allocation limit will not affect existing allocations
 /// or any future allocations within the `Bump`'s current chunk.
 ///
-/// #### Example
+/// ### Example
 ///
 /// ```
 /// # use oxc_allocator::bump::Bump;
@@ -277,7 +277,7 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// assert_eq!(bump.allocation_limit(), None);
 /// ```
 ///
-/// #### Warning
+/// ### Warning
 ///
 /// Because of backwards compatibility, allocations that fail
 /// due to allocation limits will not present differently than
@@ -531,7 +531,7 @@ fn allocation_size_overflow<T>() -> T {
 impl Bump<1> {
     /// Construct a new arena to bump allocate into.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -544,7 +544,7 @@ impl Bump<1> {
 
     /// Attempt to construct a new arena to bump allocate into.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -559,7 +559,7 @@ impl Bump<1> {
     /// Construct a new arena with the specified byte capacity to bump allocate
     /// into.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -567,7 +567,7 @@ impl Bump<1> {
     /// # let _ = bump;
     /// ```
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if allocating the initial capacity fails.
     pub fn with_capacity(capacity: usize) -> Self {
@@ -579,7 +579,7 @@ impl Bump<1> {
     ///
     /// Propagates errors when allocating the initial capacity.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::{AllocErr, Bump};
@@ -769,7 +769,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// All objects allocated in this arena get aligned to this value.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -788,7 +788,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
     /// The allocation limit for this arena in bytes.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -815,7 +815,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// a `Bump`. Updating the allocation limit will not affect existing allocations
     /// or any future allocations within the `Bump`'s current chunk.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -968,7 +968,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// If this arena has allocated multiple chunks to bump allocate into, then
     /// the excess chunks are returned to the global allocator.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1030,11 +1030,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// Allocate an object in this `Bump` and return an exclusive reference to
     /// it.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for `T` fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1051,11 +1051,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// Try to allocate an object in this `Bump` and return an exclusive
     /// reference to it.
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// Errors if reserving space for `T` fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1077,11 +1077,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// those methods without it, their performance characteristics, and when
     /// you might or might not choose a `_with` suffixed method.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for `T` fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1132,11 +1132,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// those methods without it, their performance characteristics, and when
     /// you might or might not choose a `_with` suffixed method.
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// Errors if reserving space for `T` fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1200,15 +1200,15 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// [`Ok`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Ok
     /// [`Err`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// Iff the allocation succeeds but `f` fails, that error is forwarded by value.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for `Result<T, E>` fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1311,7 +1311,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// [`Ok`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Ok
     /// [`Err`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
     ///
-    /// ## Errors
+    /// # Errors
     ///
     /// Errors with the [`Alloc`](`AllocOrInitError::Alloc`) variant iff
     /// reserving space for `Result<T, E>` fails.
@@ -1319,7 +1319,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// Iff the allocation succeeds but `f` fails, that error is forwarded by
     /// value inside the [`Init`](`AllocOrInitError::Init`) variant.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::{AllocOrInitError, Bump};
@@ -1403,11 +1403,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// `Copy` a slice into this `Bump` and return an exclusive reference to
     /// the copy.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1433,7 +1433,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
     /// Like `alloc_slice_copy`, but does not panic in case of allocation failure.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::{AllocErr, Bump};
@@ -1473,11 +1473,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// `Clone` a slice into this `Bump` and return an exclusive reference to
     /// the clone. Prefer [`alloc_slice_copy`](#method.alloc_slice_copy) if `T` is `Copy`.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1543,11 +1543,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
     /// `Copy` a string slice into this `Bump` and return an exclusive reference to it.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the string fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1568,7 +1568,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
     /// Same as `alloc_str` but does not panic on failure.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::{AllocErr, Bump};
@@ -1607,11 +1607,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// The elements of the slice are initialized using the supplied closure.
     /// The closure argument is the position in the slice.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1646,11 +1646,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// The elements of the slice are initialized using the supplied closure.
     /// The closure argument is the position in the slice.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1711,7 +1711,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// The elements of the slice are initialized using the supplied closure.
     /// The closure argument is the position in the slice.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::{AllocErr, Bump};
@@ -1764,11 +1764,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// All elements of the slice are initialized to `value`.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1805,11 +1805,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// All elements of the slice are initialized to `value.clone()`.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1849,12 +1849,12 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// The elements are initialized using the supplied iterator.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails, or if the supplied
     /// iterator returns fewer elements than it promised.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1880,12 +1880,12 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// The elements are initialized using the supplied iterator.
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails, or if the supplied
     /// iterator returns fewer elements than it promised.
     ///
-    /// ## Examples
+    /// # Examples
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1930,7 +1930,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// The elements are initialized using the supplied iterator.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -1973,11 +1973,11 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     ///
     /// [`T::default()`]: https://doc.rust-lang.org/std/default/trait.Default.html#tymethod.default
     ///
-    /// ## Panics
+    /// # Panics
     ///
     /// Panics if reserving space for the slice fails.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -2137,7 +2137,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
 
     /// Gets the remaining capacity in the current chunk (in bytes).
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -2252,7 +2252,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// arena have not had their `Drop` implementations called on them,
     /// e.g. after dropping a [`bumpalo::boxed::Box<T>`][crate::boxed::Box].
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
@@ -2338,7 +2338,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
     /// so the amount of memory requested from the Rust allocator is higher
     /// than the returned value.
     ///
-    /// ## Example
+    /// # Example
     ///
     /// ```
     /// # use oxc_allocator::bump::Bump;
