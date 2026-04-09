@@ -8,7 +8,6 @@
     clippy::cast_ptr_alignment,
     clippy::cast_sign_loss,
     clippy::filter_map_next,
-    clippy::inconsistent_struct_constructor,
     clippy::inline_always,
     clippy::manual_div_ceil,
     clippy::map_unwrap_or,
@@ -896,7 +895,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             .checked_add(FOOTER_SIZE)
             .unwrap_or_else(allocation_size_overflow);
 
-        Some(NewChunkMemoryDetails { new_size_without_footer, size, align })
+        Some(NewChunkMemoryDetails { new_size_without_footer, align, size })
     }
 
     /// Allocate a new chunk and return its initialized footer.
