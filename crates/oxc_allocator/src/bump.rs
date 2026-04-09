@@ -10,7 +10,6 @@
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::mut_from_ref,
-    clippy::ptr_cast_constness,
     clippy::undocumented_unsafe_blocks,
     clippy::unnecessary_safety_comment,
     unsafe_op_in_unsafe_fn
@@ -369,8 +368,8 @@ impl ChunkFooter {
     // Returns the start and length of the currently allocated region of this
     // chunk.
     fn as_raw_parts(&self) -> (*const u8, usize) {
-        let data = self.data.as_ptr() as *const u8;
-        let ptr = self.ptr.get().as_ptr() as *const u8;
+        let data = self.data.as_ptr().cast_const();
+        let ptr = self.ptr.get().as_ptr().cast_const();
         debug_assert!(data <= ptr);
         debug_assert!(ptr <= ptr::from_ref::<ChunkFooter>(self).cast::<u8>());
         let len =
@@ -2464,7 +2463,7 @@ impl<const MIN_ALIGN: usize> Iterator for ChunkRawIter<'_, MIN_ALIGN> {
             }
             let (ptr, len) = foot.as_raw_parts();
             self.footer = foot.prev.get();
-            Some((ptr as *mut u8, len))
+            Some((ptr.cast_mut(), len))
         }
     }
 }
