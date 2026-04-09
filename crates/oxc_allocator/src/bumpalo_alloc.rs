@@ -11,7 +11,6 @@
 #![expect(
     clippy::collapsible_if,
     clippy::equatable_if_let,
-    clippy::legacy_numeric_constants,
     clippy::missing_safety_doc,
     clippy::redundant_closure_for_method_calls,
     clippy::undocumented_unsafe_blocks,
@@ -33,7 +32,6 @@ use core::cmp;
 use core::fmt;
 use core::mem;
 use core::ptr::{self, NonNull};
-use core::usize;
 
 pub use core::alloc::{Layout, LayoutErr};
 
