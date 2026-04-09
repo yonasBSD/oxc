@@ -4,8 +4,6 @@
 //! (2 commits after 3.20.2 release). Changes have been made since.
 
 #![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
 
 use std::{
     alloc::{Layout, alloc, dealloc},
