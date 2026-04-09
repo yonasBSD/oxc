@@ -411,7 +411,7 @@ fn is_pointer_aligned_to<T>(pointer: *mut T, align: usize) -> bool {
 }
 
 #[inline]
-pub(crate) const fn round_up_to(n: usize, divisor: usize) -> Option<usize> {
+const fn round_up_to(n: usize, divisor: usize) -> Option<usize> {
     debug_assert!(divisor > 0);
     debug_assert!(divisor.is_power_of_two());
     match n.checked_add(divisor - 1) {
@@ -423,7 +423,7 @@ pub(crate) const fn round_up_to(n: usize, divisor: usize) -> Option<usize> {
 /// Like `round_up_to` but turns overflow into undefined behavior rather than
 /// returning `None`.
 #[inline]
-pub(crate) unsafe fn round_up_to_unchecked(n: usize, divisor: usize) -> usize {
+unsafe fn round_up_to_unchecked(n: usize, divisor: usize) -> usize {
     if let Some(x) = round_up_to(n, divisor) {
         x
     } else {
@@ -433,7 +433,7 @@ pub(crate) unsafe fn round_up_to_unchecked(n: usize, divisor: usize) -> usize {
 }
 
 #[inline]
-pub(crate) fn round_down_to(n: usize, divisor: usize) -> usize {
+fn round_down_to(n: usize, divisor: usize) -> usize {
     debug_assert!(divisor > 0);
     debug_assert!(divisor.is_power_of_two());
     n & !(divisor - 1)
@@ -441,14 +441,14 @@ pub(crate) fn round_down_to(n: usize, divisor: usize) -> usize {
 
 /// Same as `round_down_to` but preserves pointer provenance.
 #[inline]
-pub(crate) fn round_mut_ptr_down_to(ptr: *mut u8, divisor: usize) -> *mut u8 {
+fn round_mut_ptr_down_to(ptr: *mut u8, divisor: usize) -> *mut u8 {
     debug_assert!(divisor > 0);
     debug_assert!(divisor.is_power_of_two());
     ptr.wrapping_sub(ptr as usize & (divisor - 1))
 }
 
 #[inline]
-pub(crate) unsafe fn round_mut_ptr_up_to_unchecked(ptr: *mut u8, divisor: usize) -> *mut u8 {
+unsafe fn round_mut_ptr_up_to_unchecked(ptr: *mut u8, divisor: usize) -> *mut u8 {
     debug_assert!(divisor > 0);
     debug_assert!(divisor.is_power_of_two());
     unsafe {
