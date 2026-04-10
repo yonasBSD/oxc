@@ -56,8 +56,10 @@ pub struct JsxNoTargetBlank {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum EnforceDynamicLinksEnum {
+    /// Always enforce dynamic links.
     #[default]
     Always,
+    /// Always enforce static links.
     Never,
 }
 
