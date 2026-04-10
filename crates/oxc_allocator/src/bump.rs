@@ -467,13 +467,23 @@ const TYPICAL_PAGE_SIZE: usize = 0x1000;
 
 // We only support alignments of up to 16 bytes for iter_allocated_chunks.
 const SUPPORTED_ITER_ALIGNMENT: usize = 16;
-const CHUNK_ALIGN: usize = SUPPORTED_ITER_ALIGNMENT;
-const CHUNK_FOOTER_SIZE: usize = mem::size_of::<ChunkFooter>();
+pub const CHUNK_ALIGN: usize = SUPPORTED_ITER_ALIGNMENT;
+pub const CHUNK_FOOTER_SIZE: usize = mem::size_of::<ChunkFooter>();
 
 // Assert that `ChunkFooter` is at the supported alignment. This will give a
 // compile time error if it is not the case
 const _FOOTER_ALIGN_ASSERTION: () = {
     assert!(mem::align_of::<ChunkFooter>() == CHUNK_ALIGN);
+};
+
+// Check the hard-coded value in `ast_tools` raw transfer generator is accurate.
+// We can only do this check if we're on a 64-bit little-endian platform with the `fixed_size` feature enabled,
+// because the `fixed_size_constants` module is only compiled under those conditions.
+// That's good enough, as the size of `ChunkFooter` only matters in that case anyway (Oxlint JS plugins).
+#[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+const _: () = {
+    use crate::generated::fixed_size_constants::CHUNK_FOOTER_SIZE as EXPECTED_CHUNK_FOOTER_SIZE;
+    assert!(CHUNK_FOOTER_SIZE == EXPECTED_CHUNK_FOOTER_SIZE);
 };
 
 // Maximum typical overhead per allocation imposed by allocators.
@@ -2521,6 +2531,126 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         let new_ptr = self.try_alloc_layout(new_layout)?;
         unsafe { ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), old_size) };
         Ok(new_ptr)
+    }
+}
+
+/// Methods only available when `from_raw_parts` feature is enabled.
+/// These methods are only used by raw transfer.
+#[cfg(feature = "from_raw_parts")]
+impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
+    /// Construct a static-sized [`Bump`] from an existing memory allocation.
+    ///
+    /// The [`Bump`] which is returned takes ownership of the memory allocation,
+    /// and the allocation will be freed if the `Bump` is dropped.
+    /// If caller wishes to prevent that happening, they must wrap the `Bump` in `ManuallyDrop`.
+    ///
+    /// The [`Bump`] returned by this function cannot grow.
+    ///
+    /// # SAFETY
+    ///
+    /// * `ptr` must be aligned on [`CHUNK_ALIGN`].
+    /// * `size` must be a multiple of [`CHUNK_ALIGN`].
+    /// * `size` must be at least [`CHUNK_FOOTER_SIZE`].
+    /// * The memory region starting at `ptr` and encompassing `size` bytes must be within a single allocation.
+    /// * The memory region starting at `ptr` and encompassing `size` bytes must have been allocated from system
+    ///   allocator with alignment of [`CHUNK_ALIGN`] (or caller must wrap the `Bump` in `ManuallyDrop`
+    ///   and ensure the backing memory is freed correctly themselves).
+    /// * `ptr` must have permission for writes.
+    ///
+    /// # Panics
+    ///
+    /// Panics on invalid minimum alignments.
+    pub unsafe fn from_raw_parts(ptr: NonNull<u8>, size: usize) -> Self {
+        // Validate `MIN_ALIGN`. These checks will be removed by compiler as `MIN_ALIGN` is statically known.
+        assert!(MIN_ALIGN.is_power_of_two(), "MIN_ALIGN must be a power of two; found {MIN_ALIGN}");
+        assert!(
+            MIN_ALIGN <= CHUNK_ALIGN,
+            "MIN_ALIGN may not be larger than {CHUNK_ALIGN}; found {MIN_ALIGN}"
+        );
+
+        // Debug assert that `ptr` and `size` fulfill size and alignment requirements
+        debug_assert!((ptr.as_ptr() as usize).is_multiple_of(CHUNK_ALIGN));
+        debug_assert!(size.is_multiple_of(CHUNK_ALIGN));
+        debug_assert!(size >= CHUNK_FOOTER_SIZE);
+
+        let size_without_footer = size - CHUNK_FOOTER_SIZE;
+
+        // Construct `ChunkFooter` and write into end of allocation.
+        // SAFETY: Caller guarantees:
+        // * `ptr` is the start of an allocation of `size` bytes.
+        // * `size` is `>= CHUNK_FOOTER_SIZE` - so `size - CHUNK_FOOTER_SIZE` cannot wrap around.
+        let chunk_footer_ptr = unsafe { ptr.add(size_without_footer) }.cast::<ChunkFooter>();
+        // SAFETY: Caller guarantees `size` is a multiple of `CHUNK_ALIGN`.
+        // Caller guarantees region from `ptr` to `ptr + size` forms a single allocation,
+        // so it must be a valid layout.
+        let layout = unsafe { Layout::from_size_align_unchecked(size, CHUNK_ALIGN) };
+        let chunk_footer = ChunkFooter {
+            data: ptr,
+            layout,
+            prev: Cell::new(EMPTY_CHUNK.get()),
+            ptr: Cell::new(chunk_footer_ptr.cast::<u8>()),
+            allocated_bytes: size_without_footer,
+        };
+
+        // SAFETY: If caller has upheld safety requirements, `chunk_footer_ptr` is `CHUNK_FOOTER_SIZE`
+        // bytes from the end of the allocation, and aligned on `CHUNK_ALIGN`.
+        // Therefore `chunk_footer_ptr` is valid for writing a `ChunkFooter`.
+        unsafe { chunk_footer_ptr.write(chunk_footer) };
+
+        // Create `Bump` with allocation limit of `size_without_footer`.
+        // i.e. it cannot grow because it's already exactly at its limit.
+        // This means that the memory chunk we've just created will remain its only chunk.
+        // Therefore it can never be deallocated, until the `Bump` is dropped.
+        // `Bump::reset` would only reset the "cursor" pointer, not deallocate the memory.
+        Self {
+            current_chunk_footer: Cell::new(chunk_footer_ptr),
+            allocation_limit: Cell::new(Some(size_without_footer)),
+        }
+    }
+
+    /// Set cursor pointer for this [`Bump`]'s current chunk.
+    ///
+    /// This is dangerous, and this method should not ordinarily be used.
+    /// It is only here for manually resetting the `Bump`.
+    ///
+    /// # SAFETY
+    ///
+    /// * `Bump` must have at least 1 allocated chunk.
+    ///   It is UB to call this method on an `Bump` which has not allocated
+    ///   i.e. fresh from `Bump::new`.
+    /// * `ptr` must point to within the `Bump`'s current chunk.
+    /// * `ptr` must be equal to or after data pointer for this chunk.
+    /// * `ptr` must be equal to or before the chunk's `ChunkFooter`.
+    /// * `ptr` must be aligned to `MIN_ALIGN`.
+    /// * No live references to data in the current chunk before `ptr` can exist.
+    pub unsafe fn set_cursor_ptr(&self, ptr: NonNull<u8>) {
+        // SAFETY: `current_chunk_footer` always points to a valid `ChunkFooter`
+        let chunk_footer = unsafe { self.current_chunk_footer.get().as_ref() };
+
+        debug_assert!(ptr.as_ptr() >= chunk_footer.data.as_ptr());
+        debug_assert!(ptr.as_ptr().cast_const() <= ptr::from_ref(chunk_footer).cast::<u8>());
+        debug_assert!(ptr.addr().get().is_multiple_of(MIN_ALIGN));
+
+        // SAFETY: Caller guarantees `Bump` has at least 1 allocated chunk, and `ptr` is valid.
+        #[expect(clippy::unnecessary_safety_comment)]
+        chunk_footer.ptr.set(ptr);
+    }
+
+    /// Get pointer to end of the data region of this [`Bump`]'s current chunk
+    /// i.e to the start of the `ChunkFooter`.
+    pub fn data_end_ptr(&self) -> NonNull<u8> {
+        self.current_chunk_footer.get().cast::<u8>()
+    }
+
+    /// Get pointer to end of this [`Bump`]'s current chunk (after the `ChunkFooter`).
+    pub fn end_ptr(&self) -> NonNull<u8> {
+        let chunk_footer_ptr = self.current_chunk_footer.get();
+
+        // SAFETY: `chunk_footer_ptr` always points to a valid `ChunkFooter`,
+        // so stepping past it cannot be out of bounds of the chunk's allocation.
+        // If `Bump` has not allocated, so `chunk_footer_ptr` returns a pointer to the static empty chunk,
+        // it's still valid.
+        unsafe { chunk_footer_ptr.add(1).cast::<u8>() }
     }
 }
 
