@@ -468,7 +468,7 @@ const TYPICAL_PAGE_SIZE: usize = 0x1000;
 // We only support alignments of up to 16 bytes for iter_allocated_chunks.
 const SUPPORTED_ITER_ALIGNMENT: usize = 16;
 const CHUNK_ALIGN: usize = SUPPORTED_ITER_ALIGNMENT;
-const FOOTER_SIZE: usize = mem::size_of::<ChunkFooter>();
+const CHUNK_FOOTER_SIZE: usize = mem::size_of::<ChunkFooter>();
 
 // Assert that `ChunkFooter` is at the supported alignment. This will give a
 // compile time error if it is not the case
@@ -485,7 +485,7 @@ const MALLOC_OVERHEAD: usize = 16;
 // after adding a footer, malloc overhead and alignment, the chunk of memory
 // the allocator actually sets aside for us is X+OVERHEAD rounded up to the
 // nearest suitable size boundary.
-const OVERHEAD: usize = match round_up_to(MALLOC_OVERHEAD + FOOTER_SIZE, CHUNK_ALIGN) {
+const OVERHEAD: usize = match round_up_to(MALLOC_OVERHEAD + CHUNK_FOOTER_SIZE, CHUNK_ALIGN) {
     Some(x) => x,
     None => panic!(),
 };
@@ -891,7 +891,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
         debug_assert_eq!(align % CHUNK_ALIGN, 0);
         debug_assert_eq!(new_size_without_footer % CHUNK_ALIGN, 0);
         let size = new_size_without_footer
-            .checked_add(FOOTER_SIZE)
+            .checked_add(CHUNK_FOOTER_SIZE)
             .unwrap_or_else(allocation_size_overflow);
 
         Some(NewChunkMemoryDetails { new_size_without_footer, align, size })
@@ -1012,7 +1012,8 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             cur_chunk.as_ref().ptr.set(cur_chunk.cast());
 
             // Reset the allocated size of the chunk.
-            cur_chunk.as_mut().allocated_bytes = cur_chunk.as_ref().layout.size() - FOOTER_SIZE;
+            cur_chunk.as_mut().allocated_bytes =
+                cur_chunk.as_ref().layout.size() - CHUNK_FOOTER_SIZE;
 
             debug_assert!(
                 self.current_chunk_footer.get().as_ref().prev.get().as_ref().is_empty(),
@@ -2171,7 +2172,7 @@ impl<const MIN_ALIGN: usize> Bump<MIN_ALIGN> {
             // size is smaller than the default footer size.
             let min_new_chunk_size = layout.size().max(DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
             let mut base_size =
-                (current_layout.size() - FOOTER_SIZE).checked_mul(2)?.max(min_new_chunk_size);
+                (current_layout.size() - CHUNK_FOOTER_SIZE).checked_mul(2)?.max(min_new_chunk_size);
             let mut chunk_memory_details = iter::from_fn(|| {
                 let bypass_min_chunk_size_for_small_limits = matches!(self.allocation_limit(), Some(limit) if layout.size() < limit
                             && base_size >= layout.size()
@@ -2718,7 +2719,7 @@ mod tests {
         assert_eq!(mem::size_of::<ChunkFooter>(), mem::size_of::<usize>() * 8);
     }
 
-    // Uses private `DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER` and `FOOTER_SIZE`.
+    // Uses private `DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER` and `CHUNK_FOOTER_SIZE`.
     #[test]
     fn allocated_bytes() {
         let mut b = Bump::new();
@@ -2731,7 +2732,7 @@ mod tests {
         assert_eq!(b.allocated_bytes(), DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
         assert_eq!(
             b.allocated_bytes_including_metadata(),
-            DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER + FOOTER_SIZE
+            DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER + CHUNK_FOOTER_SIZE
         );
 
         b.reset();
@@ -2739,7 +2740,7 @@ mod tests {
         assert_eq!(b.allocated_bytes(), DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER);
         assert_eq!(
             b.allocated_bytes_including_metadata(),
-            DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER + FOOTER_SIZE
+            DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER + CHUNK_FOOTER_SIZE
         );
     }
 
