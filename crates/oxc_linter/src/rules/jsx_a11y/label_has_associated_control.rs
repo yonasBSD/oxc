@@ -54,9 +54,13 @@ pub struct LabelHasAssociatedControlConfig {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 enum Assert {
+    /// Assert that the label uses `htmlFor` to associate a control.
     HtmlFor,
+    /// Assert that the label has a nested control
     Nesting,
+    /// Assert that the label uses both `htmlFor` and nesting for associating a control
     Both,
+    /// Assert that the label uses either `htmlFor` or nesting for associating a control
     #[default]
     Either,
 }
